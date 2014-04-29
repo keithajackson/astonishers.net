@@ -195,6 +195,104 @@ var myLocation;
 var thisPage;
 var latestChapter = 1;
 
+// Get the next page, if it exists
+function getNextPage(isRecursiveCall) {
+	myLocation.changeLocation(currentChapter, ++currentPage, false);
+	$.ajax({
+		url: "http://api.tumblr.com/v2/blog/astonishers.tumblr.com/posts/photo?callback=?",
+		data : ({
+			api_key: 'BoJ3Xrg6F6oJA1T5TmK7bn387agH9oAwGV4FoMRBET2rSSYwYK',
+			tag: myLocation.getChapterQuery(),
+		}),
+
+		dataType: "jsonp",
+
+		success: function (data) {
+			console.log("Response from JSON!");
+			console.log(data);
+			// See if our hypothetical page exists
+			var offset = data.response.posts.length - (currentPage);
+			// If this offset is valid, we have a new page in this chapter
+			if (offset >= 0) {
+				console.log("Loading page " + currentPage + " (offset of " + offset + 
+					" in the list of " + data.response.posts.length + " pages)");
+				thisPage.kill();
+				myLocation.changeLocation(currentChapter, currentPage, true);
+				thisPage = new Page(data.response.posts[offset]);
+				document.body.appendChild(thisPage.getHTML());
+			} else if(isRecursiveCall == false) {
+				// We need to try to load the next chapter
+				myLocation.changeLocation(++currentChapter, currentPage, false);
+				return getNextPage(true);
+			} else {
+				// We've already tried a new chapter and
+				// a new page.  Neither exist.  Roll-back
+				// and inform user
+				myLocation.changeLocation(--currentChapter, --currentPage, false);
+				console.log("No more pages!");
+			}
+		}
+	})
+}
+
+// Get the previous page, if it exists
+function getPreviousPage() {
+	if(currentPage > 1) {
+		myLocation.changeLocation(currentChapter, --currentPage, false);
+		$.ajax({
+			url: "http://api.tumblr.com/v2/blog/astonishers.tumblr.com/posts/photo?callback=?",
+			data : ({
+				api_key: 'BoJ3Xrg6F6oJA1T5TmK7bn387agH9oAwGV4FoMRBET2rSSYwYK',
+				tag: myLocation.getChapterQuery(),
+			}),
+
+			dataType: "jsonp",
+
+			success: function (data) {
+				console.log("Response from JSON!");
+				console.log(data);
+
+				myLocation.changeLocation(currentChapter, currentPage, true);
+				offset  = data.response.posts.length - currentPage;
+				console.log("Loading page " + currentPage + " (offset of " + offset + 
+					" in the list of " + data.response.posts.length + " pages)");
+				thisPage.kill();
+				thisPage = new Page(data.response.posts[offset]);
+				document.body.appendChild(thisPage.getHTML());
+			}
+		})
+	} else if (currentChapter > 0) {
+		// gotta get the last page of the previous chapter
+		myLocation.changeLocation(--currentChapter, currentPage, false);
+		// NOTE: currentPage is MEANINGLESS right now.  We need to
+		// run changeLocation AGAIN once we've found the right "last page"
+		// of the chapter.
+		$.ajax({
+			url: "http://api.tumblr.com/v2/blog/astonishers.tumblr.com/posts/photo?callback=?",
+			data : ({
+				api_key: 'BoJ3Xrg6F6oJA1T5TmK7bn387agH9oAwGV4FoMRBET2rSSYwYK',
+				tag: myLocation.getChapterQuery(),
+			}),
+
+			dataType: "jsonp",
+
+			success: function (data) {
+				console.log("Response from JSON!");
+				console.log(data);
+
+				currentPage = data.response.posts.length;
+				myLocation.changeLocation(currentChapter, currentPage, true);
+
+				console.log("Loading page " + currentPage + " (offset of 0 in the list of " + data.response.posts.length + " pages)");
+				thisPage.kill();
+
+				thisPage = new Page(data.response.posts[offset]);
+				document.body.appendChild(thisPage.getHTML());
+			}
+		})
+	}
+}
+
 /* Swap out the URL when scrolling to a certain point */
 /*$(document).scroll(function () {
 	
@@ -215,6 +313,14 @@ function getQueryVariable(variable)
 $("#changeChapter").click(function (event) {
 	console.log("Changed chapter!");
 	myLocation.changeLocation(0, 1);
+});
+
+$("#nextPage").click(function(event) {
+	getNextPage();
+});
+
+$("#previousPage").click(function(event) {
+	getPreviousPage();
 });
 
 /* JQuery: Populate the table as soon as the page is loaded. */

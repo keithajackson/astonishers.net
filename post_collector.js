@@ -65,11 +65,11 @@ function LocationInfo(thisChapter, thisPage) {
 	var self=this;
 	var chapter = thisChapter;
 	var page = thisPage;
-	
+	console.log("Just made a locationinfo with chapter " + chapter + " and page " + page);
 	this.changeLocation = function(newChapter, newPage, updateURL) {
 		// Change variable values
-		chapter = newChapter;
-		page = newPage;
+		self.chapter = newChapter;
+		self.page = newPage;
 		// Change URL
 		if(updateURL == true) {
 			history.replaceState(null, "chapter " + newChapter + " page " + newPage,
@@ -78,9 +78,10 @@ function LocationInfo(thisChapter, thisPage) {
 	}
 	this.getChapterQuery = function() {
 		// convert "chapter 0" to prologue
-		if(chapter == 0) {
+		if(self.chapter == 0) {
 			return "prologue";
 		} else {
+			console.log("returning chapter " + self.chapter);
 			return "chapter " + self.chapter;
 		}
 	};
@@ -193,6 +194,8 @@ var isDesktop;
 var showSplash;
 var myLocation;
 var thisPage;
+var currentChapter;
+var currentPage;
 var latestChapter = 1;
 
 // Get the next page, if it exists
@@ -239,6 +242,7 @@ function getNextPage(isRecursiveCall) {
 function getPreviousPage() {
 	if(currentPage > 1) {
 		myLocation.changeLocation(currentChapter, --currentPage, false);
+		console.log("Attempting to get page " + currentPage + " from chapter " + currentChapter + " via tag " + myLocation.getChapterQuery());
 		$.ajax({
 			url: "http://api.tumblr.com/v2/blog/astonishers.tumblr.com/posts/photo?callback=?",
 			data : ({
@@ -332,7 +336,7 @@ $(document).ready(function () {
 	
 	// make and load LocationInfo object
 	myLocation = new LocationInfo(currentChapter, currentPage);
-    
+    console.log("Initialized LocationInfo with " + myLocation.getChapterQuery());
 	
 	// If we have no chapter, then show the splash and start at the beginning
 	if(currentChapter == null) {
@@ -355,7 +359,7 @@ $(document).ready(function () {
 		myLocation.changeLocation(currentChapter, currentPage, true);
 	}
 	isDesktop = ($(window).width() > 700);
-	console.log("Just loaded chapter " + getQueryVariable("chapter") + ", page " + getQueryVariable("page"));
+	console.log("Attempting to get page " + currentPage + " from chapter " + currentChapter + " via tag " + myLocation.getChapterQuery());
 	// Load the page 
 	$.ajax({
 		url: "http://api.tumblr.com/v2/blog/astonishers.tumblr.com/posts/photo?callback=?",

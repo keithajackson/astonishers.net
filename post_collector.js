@@ -60,6 +60,29 @@ function Page(postData) {
 	}
 }
 
+// cookie stuff for picking up location where user
+// left off
+// http://www.w3schools.com/js/js_cookies.asp
+function getCookie(cname)
+{
+var name = cname + "=";
+var ca = document.cookie.split(';');
+for(var i=0; i<ca.length; i++)
+  {
+  var c = ca[i].trim();
+  if (c.indexOf(name)==0) return c.substring(name.length,c.length);
+  }
+return "";
+} 
+
+function setCookie(cname,cvalue,exdays)
+{
+var d = new Date();
+d.setTime(d.getTime()+(exdays*24*60*60*1000));
+var expires = "expires="+d.toGMTString();
+document.cookie = cname + "=" + cvalue + "; " + expires;
+} 
+
 // LocationInfo (singleton)
 // Contains the current chapter and page, the user is on,
 // and can return the tags to search for with
@@ -75,6 +98,8 @@ function LocationInfo(thisChapter, thisPage) {
 		if(updateURL == true) {
 			history.replaceState(null, "chapter " + newChapter + " page " + newPage,
 				"?chapter=" + newChapter + "&page=" + newPage);
+			setCookie("chapter", newChapter, 30);
+			setCookie("page", newPage, 30);
 		}
 	}
 	this.getChapterQuery = function() {
@@ -98,7 +123,7 @@ function LocationInfo(thisChapter, thisPage) {
 
 // SplashScreen
 // Contains methods to build and destroy a splash overlay
-function showSplash() {
+function showSplash(hasCookie) {
 	// build layout
 	var overlay = document.createElement("div");
 	overlay.setAttribute("class", "overlay");
@@ -116,10 +141,20 @@ function showSplash() {
 	
 	var titlePostfix = document.createElement("div");
 	titlePostfix.innerHTML = "THE ANIMATED WEBCOMIC";
+
+	var restartButton;
 	
-	var startBeginningButton = document.createElement("button");
-	startBeginningButton.setAttribute("id", "startFromBeginning");
-	startBeginningButton.innerHTML = "Start Reading";
+	var resumeButton = document.createElement("button");
+	resumeButton.setAttribute("id", "resume");
+
+	if(hasCookie == true) {
+		restartButton = document.createElement("button");
+		restartButton.setAttribute("id", "restart");
+		restartButton.innerHTML = "Start Over";
+		resumeButton.innerHTML = "Continue Reading";
+	} else {
+		resumeButton.innerHTML = "Start Reading";
+	}
 	
 	var startLatestButton = document.createElement("button");
 	startLatestButton.setAttribute("id", "startFromLatest");
@@ -133,18 +168,52 @@ function showSplash() {
 	frame.appendChild(br.cloneNode(false));
 	frame.appendChild(titlePostfix);
 	frame.appendChild(br.cloneNode(false));
-	frame.appendChild(startBeginningButton);
+	
+	if(hasCookie == true) {
+		frame.appendChild(restartButton);
+		frame.appendChild(br.cloneNode(false));
+	}
+	
+	frame.appendChild(resumeButton);
 	frame.appendChild(br.cloneNode(false));
 	frame.appendChild(startLatestButton);
 	document.body.appendChild(overlay);
 	document.body.appendChild(frame);
 	// set behaviors
-	$("#startFromBeginning").click(function (event) {
+	$("#resume").click(function (event) {
 		// save page location to history
 		myLocation.changeLocation(myLocation.getChapter(), myLocation.getPage(), true);
 		// kill splash
 		document.body.removeChild(document.getElementById("splashbox"));
 	document.body.removeChild(document.getElementById("overlay"));
+	});
+	$("#restart").click(function (event) {
+		myLocation.changeLocation(0, 1, true);
+		$.ajax({
+			url: "http://api.tumblr.com/v2/blog/astonishers.tumblr.com/posts/photo?callback=?",
+			data : ({
+				api_key: 'BoJ3Xrg6F6oJA1T5TmK7bn387agH9oAwGV4FoMRBET2rSSYwYK',
+				tag: myLocation.getChapterQuery(),
+			}),
+
+			dataType: "jsonp",
+
+			success: function (data) {
+				console.log("Response from JSON!");
+				console.log(data);
+				// Get correct page
+				var offset = data.response.posts.length - (myLocation.getPage());
+				// Make this the current page
+				console.log("Loading page " + myLocation.getPage() + " (offset of " + offset + 
+					" in the list of " + data.response.posts.length + " pages)");
+				thisPage.kill();
+				thisPage = new Page(data.response.posts[offset]);
+				document.body.appendChild(thisPage.getHTML());
+			}
+		})
+		// kill splash
+		document.body.removeChild(document.getElementById("splashbox"));
+		document.body.removeChild(document.getElementById("overlay"));
 	});
 	$("#startFromLatest").click(function (event) {
 		// get latest page and chapter number
@@ -200,6 +269,7 @@ var showSplash;
 var myLocation;
 var thisPage;
 var latestChapter = 1;
+var COOKIE_NAME = "astonishers";
 
 // Get the next page, if it exists
 function getNextPage(isRecursiveCall) {
@@ -355,11 +425,17 @@ $(document).ready(function () {
 		// the current location and restore it/suppress the
 		// splash screen if found.
 		// OR: add a "pick up where I left off"?
-		
-		// Do NOT update the URL in myLocation, as we want to show the splash again
-		// if the user doesn't click on anything
-		myLocation.changeLocation(0, 1, false);
-		showSplash();
+		var cookieChapter = getCookie("chapter");
+		var cookiePage = getCookie("page");
+		if(cookieChapter != "" && cookiePage != "" && (cookieChapter != 0 || cookiePage != 1)) {
+			myLocation.changeLocation(cookieChapter, cookiePage, false);
+			showSplash(true);
+		} else {
+			// Do NOT update the URL in myLocation, as we want to show the splash again
+			// if the user doesn't click on anything
+			myLocation.changeLocation(0, 1, false);
+			showSplash(false);
+		}
 	}
 	// If we have no page, then start at the first page of that chapter
 	else if (myLocation.getPage() == null) {

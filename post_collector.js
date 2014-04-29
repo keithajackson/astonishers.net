@@ -8,9 +8,9 @@
 function Page(postData) {
 	var self=this;
 	this.id = postData.id;
-	var type = postData.type;
-	// Different behaviour if we have a video or photo postData
-	if(postData.type == "photo") {
+	this.type = postData.type;
+	// Different ` if we have a video or photo postData
+	if(this.type == "photo") {
 		var photoURLs = new Array();
 		// Load photo array with ONLY urls, nothing else
 		for (var i = 0; i < postData.photos.length; i++) {
@@ -33,7 +33,7 @@ function Page(postData) {
 			
 			return photosetContainer;
 		}
-	} else if (postData.type == "video") {
+	} else if (this.type == "video") {
 		var embedCode = postData.player[0].embed_code;
 		
 		this.getHTML = function () {
@@ -63,9 +63,8 @@ function Page(postData) {
 // and can return the tags to search for with
 function LocationInfo(thisChapter, thisPage) {
 	var self=this;
-	var chapter = thisChapter;
-	var page = thisPage;
-	console.log("Just made a locationinfo with chapter " + chapter + " and page " + page);
+	this.chapter = thisChapter;
+	this.page = thisPage;
 	this.changeLocation = function(newChapter, newPage, updateURL) {
 		// Change variable values
 		self.chapter = newChapter;
@@ -163,8 +162,11 @@ function showSplash() {
 			// Get correct page number
 			currentPage = 1;			
 			for(var i = 1; i < data.response.posts.length; i++) {
-				if ($.inArray("chapter " + latestChapter), data.response.posts[i].tags) {
-					currentPage++;
+				for(var j = 0; j < data.response.posts[i].tags.length; j++) {
+					if(data.response.posts[i].tags[j] == "chapter " + latestChapter) {
+						currentPage++;
+						break;
+					}
 				}
 			}
 			console.log("Loading page " + currentPage +
@@ -200,7 +202,14 @@ var latestChapter = 1;
 
 // Get the next page, if it exists
 function getNextPage(isRecursiveCall) {
-	myLocation.changeLocation(currentChapter, ++currentPage, false);
+	var tempPage;
+	if(isRecursiveCall == false) {
+		myLocation.changeLocation(currentChapter, ++currentPage, false);
+	} else {
+		tempPage = currentPage; 
+		currentPage = 1;
+		myLocation.changeLocation(++currentChapter, currentPage, false);
+	}
 	$.ajax({
 		url: "http://api.tumblr.com/v2/blog/astonishers.tumblr.com/posts/photo?callback=?",
 		data : ({
@@ -225,13 +234,13 @@ function getNextPage(isRecursiveCall) {
 				document.body.appendChild(thisPage.getHTML());
 			} else if(isRecursiveCall == false) {
 				// We need to try to load the next chapter
-				myLocation.changeLocation(++currentChapter, currentPage, false);
+				
 				return getNextPage(true);
 			} else {
 				// We've already tried a new chapter and
 				// a new page.  Neither exist.  Roll-back
 				// and inform user
-				myLocation.changeLocation(--currentChapter, --currentPage, false);
+				myLocation.changeLocation(--currentChapter, tempPage, false);
 				console.log("No more pages!");
 			}
 		}
@@ -290,10 +299,12 @@ function getPreviousPage() {
 				console.log("Loading page " + currentPage + " (offset of 0 in the list of " + data.response.posts.length + " pages)");
 				thisPage.kill();
 
-				thisPage = new Page(data.response.posts[offset]);
+				thisPage = new Page(data.response.posts[0]);
 				document.body.appendChild(thisPage.getHTML());
 			}
 		})
+	} else {
+		console.log("No more pages!");
 	}
 }
 
@@ -320,7 +331,7 @@ $("#changeChapter").click(function (event) {
 });
 
 $("#nextPage").click(function(event) {
-	getNextPage();
+	getNextPage(false);
 });
 
 $("#previousPage").click(function(event) {
@@ -332,11 +343,11 @@ $(document).ready(function () {
 
 	currentChapter = getQueryVariable("chapter");
 	currentPage = getQueryVariable("page");
+	
+	myLocation = new LocationInfo(currentChapter, currentPage);
 	console.log("Loading chapter " + currentChapter + " page " + currentPage);
 	
 	// make and load LocationInfo object
-	myLocation = new LocationInfo(currentChapter, currentPage);
-    console.log("Initialized LocationInfo with " + myLocation.getChapterQuery());
 	
 	// If we have no chapter, then show the splash and start at the beginning
 	if(currentChapter == null) {

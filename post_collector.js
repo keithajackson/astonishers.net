@@ -248,7 +248,7 @@ function Chapter(chapterID, onLoadCallback) {
 // INSTANCE VARIABLES
 // ------------------
 var isDesktop;
-var isPortrait = true;	// TODO: make this change dynamically
+var displayMode = "portrait";	// TODO: make this change dynamically
 var showSplash;
 var currentChapter;
 var DEFAULT_LATEST_CHAPTER = 1;
@@ -410,6 +410,14 @@ function displayChapter(chapterObj, pageIndex, errorMsg) {
 			loadPage(0);
 		}
 	}
+	
+}
+
+// Takes a Page object and actually prints it to the
+// screen.  Uses the global variable displayMode to
+// decide whether we're making a portait or landscape-style
+// page.
+function displayPage(pageObj) {
 	
 }
 

@@ -183,7 +183,7 @@ function Chapter(chapterID, onLoadCallback) {
 	var self = this;
 	var pages = new Array();
 	var chaptTag;
-	var chaptID = chapterID;
+	var chaptID = Number(chapterID);
 	var currentPageIndex = 0;	// index of the currently displayed page
 
 	if(chapterID == 0) {
@@ -197,7 +197,8 @@ function Chapter(chapterID, onLoadCallback) {
 		setCookie("page",currentPageIndex,30);
 	}
 	this.getPreviousPage = function() {
-		if(currentPageIndex <= 0) {
+		if(currentPageIndex - 1 < 0) {
+			console.log("Page out of range of this chapter.  Returning false.");
 			return false;
 		} else {
 			currentPageIndex--;
@@ -207,7 +208,8 @@ function Chapter(chapterID, onLoadCallback) {
 	}
 	
 	this.getNextPage = function() {
-		if(currentPageIndex >= pages.length) {
+		if(currentPageIndex + 1 >= pages.length) {
+			console.log("Page out of range of this chapter.  Returning false.");
 			return false;
 		} else {
 			currentPageIndex++;
@@ -218,6 +220,7 @@ function Chapter(chapterID, onLoadCallback) {
 	
 	this.getPage = function(index) {
 		if(index >= pages.length) {
+			console.log("Page out of range of this chapter.  Returning false.");
 			return false;
 		} else {
 			currentPageIndex = index;
@@ -249,7 +252,7 @@ var isPortrait = true;	// TODO: make this change dynamically
 var showSplash;
 var currentChapter;
 var DEFAULT_LATEST_CHAPTER = 1;
-
+var LAST_PAGE_OF_THIS_CHAPTER = -1;
 // cookie stuff for picking up location where user
 // left off
 // http://www.w3schools.com/js/js_cookies.asp
@@ -342,11 +345,11 @@ function showSplash(hasCookie, latestChapter) {
 	$("#restart").click(function (event) {
 		killSplash();
 		// jump to prologue;
-		loadChapter(0);
+		loadChapter(0, 0);
 	});
 	$("#startFromLatest").click(function (event) {
 		killSplash();
-		loadChapter(latestChapter);
+		loadChapter(latestChapter, LAST_PAGE_OF_THIS_CHAPTER);
 	});
 }
 
@@ -366,7 +369,7 @@ function loadPage(pageIndex) {
 function loadNextPage() {
 	console.log("Attempting to load next page.");
 	var thePage = currentChapter.getNextPage();
-	
+	console.log(thePage);
 	if(thePage == false) {
 		console.log("Reached the end of the chapter.  Loading next chapter...");
 		loadNextChapter();
@@ -395,9 +398,15 @@ function displayChapter(chapterObj, pageIndex, errorMsg) {
 		console.log(errorMsg);
 	} else {
 		currentChapter = chapterObj;
+		// check if this is supposed to load the last page of the chapter
+		if(pageIndex == LAST_PAGE_OF_THIS_CHAPTER) {
+			pageIndex = currentChapter.getPageCount() - 1;
+			console.log("Attempting to load the LAST page of this chapter (" + pageIndex + ")");
+		}
 		// try to display page
-		if(!loadPage(pageIndex)) {
+		if(loadPage(pageIndex) == false) {
 			// if it fails try the first page
+			console.log("Failed to load the page at the given index; loading page 0.");
 			loadPage(0);
 		}
 	}
@@ -405,11 +414,11 @@ function displayChapter(chapterObj, pageIndex, errorMsg) {
 }
 
 function loadNextChapter() {
-	new Chapter(currentChapter.getChapterNumber() + 1, function(newChapterObj) {displayChapter(newChapterObj, pageIndex, "This is the last page.")});
+	new Chapter(currentChapter.getChapterNumber() + 1, function(newChapterObj) {displayChapter(newChapterObj, 0, "This is the last page.")});
 }
 
 function loadPreviousChapter() {
-	new Chapter(currentChapter.getChapterNumber() + 1, function(newChapterObj) {displayChapter(newChapterObj, pageIndex, "This is the first page.")});
+	new Chapter(currentChapter.getChapterNumber() - 1, function(newChapterObj) {displayChapter(newChapterObj, LAST_PAGE_OF_THIS_CHAPTER, "This is the first page.")});
 }
 
 function loadChapter(chapterIndex, pageIndex) {
@@ -432,21 +441,22 @@ $(document).ready(function () {
 	// Get latest chapter number and then display the splash/prompt
 	getMostRecentAJAX(function(mostRecentPost) {
 		var hasValidCookie;
-		var cookieChapter = getCookie("chapter");
-		var cookiePage = getCookie("page");
+		//var cookieChapter = getCookie("chapter");
+		//var cookiePage = getCookie("page");
+		/* -- CURRENTLY IGNORING THE COOKIES
 		if(cookieChapter != "" && !isNaN(cookieChapter) && cookiePage != "" && !isNaN(cookiePage) && (cookieChapter != 0 || cookiePage != 0)) {
 			console.log("Loading chapter " + cookieChapter + ", page " + cookiePage);
 			loadChapter(cookieChapter, cookiePage);
 			startChapter = cookieChapter;
 			startPage = cookiePage;
 			hasValidCookie = true;
-		} else {
+		} else { */
 			// Do NOT update the URL in myLocation, as we want to show the splash again
 			// if the user doesn't click on anything
 			loadChapter(0, 0);
 			console.log("No cookie.  We are starting at the beginning.");
 			hasValidCookie = false;
-		}
+		//}
 		var latestChapter = DEFAULT_LATEST_CHAPTER;
 		// Figure out latest chapter from the tags of the post
 		for(var i = 0; i < mostRecentPost.tags.length; i++) {

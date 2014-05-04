@@ -191,18 +191,13 @@ function Chapter(chapterID, onLoadCallback) {
 	} else {
 		chaptTag = "chapter " + chapterID;
 	}
-	// load the chapter via Tumblr API call.
-	savePlaceInCookie = function() {
-		setCookie("chapter",chaptID,30);
-		setCookie("page",currentPageIndex,30);
-	}
+	
 	this.getPreviousPage = function() {
 		if(currentPageIndex - 1 < 0) {
 			console.log("Page out of range of this chapter.  Returning false.");
 			return false;
 		} else {
 			currentPageIndex--;
-			savePlaceInCookie();
 			return(pages[currentPageIndex]);
 		}
 	}
@@ -213,7 +208,6 @@ function Chapter(chapterID, onLoadCallback) {
 			return false;
 		} else {
 			currentPageIndex++;
-			savePlaceInCookie();
 			return(pages[currentPageIndex]);
 		}
 	}
@@ -224,13 +218,15 @@ function Chapter(chapterID, onLoadCallback) {
 			return false;
 		} else {
 			currentPageIndex = index;
-			savePlaceInCookie();
 			return(pages[index]);
 		}
 	}
 	
 	this.getChapterNumber = function() {
 		return chaptID;
+	}
+	this.getCurrentPageNumber = function() {
+		return currentPageIndex;
 	}
 	this.getPageCount = function() {
 		return pages.length;
@@ -253,6 +249,8 @@ var showSplash;
 var currentChapter;
 var DEFAULT_LATEST_CHAPTER = 1;
 var LAST_PAGE_OF_THIS_CHAPTER = -1;
+var DISPLAY_MODE_PORTRAIT = "portrait";
+var DISPLAY_MODE_LANDSCAPE = "landscape";
 // cookie stuff for picking up location where user
 // left off
 // http://www.w3schools.com/js/js_cookies.asp
@@ -356,12 +354,14 @@ function showSplash(hasCookie, latestChapter) {
 function loadPage(pageIndex) {
 	console.log("Attempting to load page: " + pageIndex);
 	var thePage = currentChapter.getPage(pageIndex);
-	console.log(thePage);
+	
 	if(thePage == false) {
 		console.log("Could not load page.");
 		return false;
 	} else {
-		document.body.appendChild(thePage.getPortraitHTML());
+		console.log("Found page. Loading...");
+		console.log(thePage);
+		displayPage(thePage);
 	}
 }
 
@@ -369,13 +369,14 @@ function loadPage(pageIndex) {
 function loadNextPage() {
 	console.log("Attempting to load next page.");
 	var thePage = currentChapter.getNextPage();
-	console.log(thePage);
+	
 	if(thePage == false) {
 		console.log("Reached the end of the chapter.  Loading next chapter...");
 		loadNextChapter();
 	} else {
-		console.log("Found new page. Loading...");
-		document.body.appendChild(thePage.getPortraitHTML());
+		console.log("Found next page. Loading...");
+		console.log(thePage);
+		displayPage(thePage);
 	}
 }
 
@@ -386,7 +387,9 @@ function loadPreviousPage() {
 	if(thePage == false) {
 		loadPreviousChapter();
 	} else {
-		document.body.appendChild(thePage.getPortraitHTML());
+		console.log("Found previous page. Loading...");
+		console.log(thePage);
+		displayPage(thePage);
 	}
 }
 
@@ -415,10 +418,20 @@ function displayChapter(chapterObj, pageIndex, errorMsg) {
 
 // Takes a Page object and actually prints it to the
 // screen.  Uses the global variable displayMode to
-// decide whether we're making a portait or landscape-style
+// decide whether we're making a portrait or landscape-style
 // page.
 function displayPage(pageObj) {
-	
+	if(displayMode == DISPLAY_MODE_PORTRAIT) {
+		$("mainContent").empty();
+		$("mainContent").innerHTML = pageObj.getPortraitHTML();
+	} else if (displayMode = DISPLAY_MODE_LANDSCAPE) {
+		
+	} else {
+		console.log("Could not resolve the display mode type for this page!");
+	}
+	// save place in cookie
+	setCookie("chapter",currentChapter.getChapterNumber(),30);
+	setCookie("page",currentChapter.getCurrentPageNumber(),30);
 }
 
 function loadNextChapter() {

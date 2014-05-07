@@ -422,8 +422,9 @@ function displayChapter(chapterObj, pageIndex, errorMsg) {
 // page.
 function displayPage(pageObj) {
 	if(displayMode == DISPLAY_MODE_PORTRAIT) {
-		$("mainContent").empty();
-		$("mainContent").innerHTML = pageObj.getPortraitHTML();
+		$("#mainContent").empty();
+		$("#mainContent").html(pageObj.getPortraitHTML());
+		window.scrollTo(0, 0);
 	} else if (displayMode = DISPLAY_MODE_LANDSCAPE) {
 		
 	} else {

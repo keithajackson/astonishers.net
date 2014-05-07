@@ -1,15 +1,41 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
+	<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"> 
     <title>Astonishers: The Animated Webcomic</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.css">
+    <link href="styles.css" rel="stylesheet" type="text/css">
+    <!-- JavaScript HTML requirements -->
+	<script src="http://code.jquery.com/jquery-1.8.3.min.js"></script>
+	<script src="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.js"></script>
+	<link rel='stylesheet' href='post_collector.css' />
 </head>
+
 <body>
-<button id="previousPage">Previous Page</button>
-<button id="nextPage">Next Page</button>
-<div id="mainContent"></div>
-</body>
+	<!-- HOME -->
+	<div data-role="page" id="contentPane">
+		
+		<header data-role="header"  data-position="fixed" >
+			<h1>Prologue, Part 1</h1>
+			
+    	</header>
+    
+    	<section data-role="content">
+			<div id="mainContent" align="center"></div>
+
+    	</section>
+		<div data-role="footer" data-position="fixed" >
+			<div data-role="navbar">
+			<ul>
+				<li><a id="previousPage" data-role="button" data-icon="arrow-l">Previous</a></li>
+				<li><a href="navPane" data-role="button" data-icon="grid">Menu</a></li>
+				<li><a id="nextPage" data-role="button" data-icon="arrow-r">Next</a></li>
+			</ul>
+			</div>
+		</footer>
+	</div>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script> 
 <script src="post_collector.js"></script>
+</body>
 </html>

@@ -83,8 +83,8 @@ function Page(postData) {
 			// Add each photo to the set
 			for(var i = 0; i < photoURLs.length; i++) {
 				var thisPhoto = document.createElement("img");
-				thisPhoto.setAttribute("class", "lazy");		// was contentPhoto
-				thisPhoto.setAttribute("data-original", photoURLs[i]);
+				thisPhoto.setAttribute("class", "contentPhoto");		// was lazy
+				thisPhoto.setAttribute("src", photoURLs[i]);
 				photosetContainer.appendChild(thisPhoto);
 				photosetContainer.appendChild(br.cloneNode(false));
 			}
@@ -472,11 +472,11 @@ function displayPage(pageObj) {
 		$("#mainContent").empty();
 		$("#mainContent").html(pageObj.getPortraitHTML());
 		window.scrollTo(0, 0);
-		$(function() {
+		/*$(function() {
 			$("img.lazy").lazyload({
 				threshold : 600
 			});
-		});
+		});*/
 		// Change the header
 		// get page,chapter
 		var pageLabel;

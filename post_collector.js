@@ -65,7 +65,7 @@ function Page(postData) {
 	var self=this;
 	this.id = postData.id;
 	this.type = postData.type;
-	this.landscapeIndex = 0;
+	var landscapeIndex = 0;
 	// Different ` if we have a video or photo postData
 	if(this.type == "photo") {
 		var photoURLs = new Array();
@@ -83,21 +83,30 @@ function Page(postData) {
 			// Add each photo to the set
 			for(var i = 0; i < photoURLs.length; i++) {
 				var thisPhoto = document.createElement("img");
-				thisPhoto.setAttribute("class", "contentPhoto");
-				thisPhoto.setAttribute("src", photoURLs[i]);
+				thisPhoto.setAttribute("class", "lazy");		// was contentPhoto
+				thisPhoto.setAttribute("data-original", photoURLs[i]);
 				photosetContainer.appendChild(thisPhoto);
 				photosetContainer.appendChild(br.cloneNode(false));
 			}
 			
 			return photosetContainer;
 		}
+
+		this.getLandscapeHTML = function() {
+			var thisPhoto = document.createElement("img");
+			thisPhoto.setAttribute("class", "contentPhoto");
+			thisPhoto.setAttribute("src", photoURLs[landscapeIndex]);
+				
+			return thisPhoto;
+		}
+		
 		// Returns false if we are already at the last page
 		this.getNextLandscapeHTML = function() {
 			if(landscapeIndex + 1 == photoURLs.length) {
 				return false;
 			} else {
 				landscapeIndex++;
-				return getLandscapeHTML();
+				return self.getLandscapeHTML();
 			}
 		}
 		// Returns false if we are already at the first page
@@ -106,17 +115,27 @@ function Page(postData) {
 				return false;
 			} else {
 				landscapeIndex--;
-				return getLandscapeHTML();
+				return self.getLandscapeHTML();
 			}
 		}
 		
-		this.getLandscapeHTML = function() {
-			var thisPhoto = document.createElement("img");
-			thisPhoto.setAttribute("class", "contentPhoto");
-			thisPhoto.setAttribute("src", photoURLs[landscapeIndex]);
-				
-			return thisPhoto;
+		this.hasNextLandscapeHTML = function () {
+			if(landscapeIndex + 1 == photoURLs.length) {
+				return false;
+			} else {
+				return true
+			}
 		}
+		
+		this.hasPreviousLandscapeHTML = function () {
+			if(landscapeIndex - 1 < 0) {
+				return false;
+			} else {
+				return true;
+			}
+		}
+		
+		
 		
 	} else if (this.type == "video") {
 		var embedCode = postData.player[0].embed_code;
@@ -129,6 +148,14 @@ function Page(postData) {
 			return videoEmbed;
 		}
 		
+		this.getLandscapeHTML = function() {
+			var thisPhoto = document.createElement("img");
+			thisPhoto.setAttribute("class", "contentVideo");
+			thisPhoto.innerHTML = embedCode;
+				
+			return thisPhoto;
+		}
+		
 		//There's only ever one video, so this is false.
 		this.getNextLandscapeHTML = function() {
 			return false;
@@ -139,13 +166,15 @@ function Page(postData) {
 			return false;
 		}
 		
-		this.getLandscapeHTML = function() {
-			var thisPhoto = document.createElement("img");
-			thisPhoto.setAttribute("class", "contentVideo");
-			thisPhoto.innerHTML = embedCode;
-				
-			return thisPhoto;
+		this.hasNextLandscapeHTML = function () {
+			return false;
 		}
+		
+		this.hasPreviousLandscapeHTML = function () {
+			return false;
+		}
+		
+		
 		
 	} else {
 		console.log("Cannot determine the type of this post!");
@@ -162,6 +191,14 @@ function Page(postData) {
 		}
 		
 		this.getPreviousLandscapeHTML = function() {
+			return false;
+		}
+		
+		this.hasNextLandscapeHTML = function () {
+			return false;
+		}
+		
+		this.hasPreviousLandscapeHTML = function () {
 			return false;
 		}
 		
@@ -219,6 +256,15 @@ function Chapter(chapterID, onLoadCallback) {
 		} else {
 			currentPageIndex = index;
 			return(pages[index]);
+		}
+	}
+	
+	this.getCurrentPage = function() {
+		if(currentPageIndex >= pages.length || currentPageIndex < 0) {
+			console.log("Page out of range of this chapter.  Returning false.");
+			return false;
+		} else {
+			return(pages[currentPageIndex]);
 		}
 	}
 	
@@ -341,13 +387,14 @@ function showSplash(hasCookie, latestChapter) {
 		killSplash();
 	});
 	$("#restart").click(function (event) {
-		killSplash();
 		// jump to prologue;
 		loadChapter(0, 0);
-	});
-	$("#startFromLatest").click(function (event) {
 		killSplash();
+	});
+
+	$("#startFromLatest").click(function (event) {
 		loadChapter(latestChapter, LAST_PAGE_OF_THIS_CHAPTER);
+		killSplash();
 	});
 }
 
@@ -425,8 +472,25 @@ function displayPage(pageObj) {
 		$("#mainContent").empty();
 		$("#mainContent").html(pageObj.getPortraitHTML());
 		window.scrollTo(0, 0);
+		$(function() {
+			$("img.lazy").lazyload({
+				threshold : 600
+			});
+		});
+		// Change the header
+		// get page,chapter
+		var pageLabel;
+		if(currentChapter.getChapterNumber() == 0) {
+			pageLabel = "Prologue, "
+		} else {
+			pageLabel = "Chapter " + currentChapter.getChapterNumber() + ", ";
+		}
+		pageLabel = pageLabel + "Page " + (currentChapter.getCurrentPageNumber() + 1);
+		$("#pageLabel").html(pageLabel);
 	} else if (displayMode = DISPLAY_MODE_LANDSCAPE) {
-		
+		// This is only called when we are loading the first frame of a page
+		 $("#mainContent").empty();
+		 $("#mainContent").html(pageObj.getLandscapeHTML());
 	} else {
 		console.log("Could not resolve the display mode type for this page!");
 	}
@@ -448,14 +512,65 @@ function loadChapter(chapterIndex, pageIndex) {
 	new Chapter(chapterIndex, function(newChapterObj) {displayChapter(newChapterObj, pageIndex, "Cannot load chapter " + chapterIndex + ", page " + pageIndex + ".")});
 }
 
+function loadNextImage() {
+	// replace with previous frame if there is one
+	if(currentChapter.getCurrentPage().hasNextLandscapeHTML() == true) {
+		$("#mainContent").empty();
+		$("#mainContent").html(currentChapter.getCurrentPage().getNextLandscapeHTML());
+	} else {
+		loadNextPage();
+	}
+}
+
+function loadPreviousImage() {
+	// replace with previous frame if there is one
+	if(currentChapter.getCurrentPage().hasPreviousLandscapeHTML() == true) {
+		$("#mainContent").empty();
+		$("#mainContent").html(currentChapter.getCurrentPage().getPreviousLandscapeHTML());
+	} else {
+		loadPreviousPage();
+	}
+}
+
 $("#nextPage").click(function(event) {
-	loadNextPage();
+	if(displayMode == DISPLAY_MODE_LANDSCAPE)
+		loadNextImage();
+	else
+		loadNextPage();
 });
 
 $("#previousPage").click(function(event) {
-	loadPreviousPage();
+	if(displayMode == DISPLAY_MODE_LANDSCAPE)
+		loadPreviousImage();
+	else
+		loadPreviousPage();
 });
 
+$(document).keydown(function(e){
+    if (e.keyCode == 37) {	// left arrow 
+       	if(displayMode == DISPLAY_MODE_LANDSCAPE)
+			loadPreviousImage();
+		else
+			loadPreviousPage();
+    }
+	else if (e.keyCode == 39){
+		if(displayMode == DISPLAY_MODE_LANDSCAPE)
+			loadNextImage();
+		else
+			loadNextPage();
+	}
+});
+
+$(function(){
+	$( "img" ).on( "swipeleft", function(event) {
+		if(displayMode == DISPLAY_MODE_LANDSCAPE)
+			loadNextImage();
+	});
+	$( "img" ).on( "swiperight", function(event) {
+		if(displayMode == DISPLAY_MODE_LANDSCAPE)
+			loadPreviousImage();
+	});
+});
 /* JQuery: Populate the table as soon as the page is loaded. */
 $(document).ready(function () {
 	isDesktop = ($(window).width() > 700);
@@ -489,8 +604,8 @@ $(document).ready(function () {
 			}
 		}
 		
-		showSplash(hasValidCookie, latestChapter);
 	});
-	
+
+
 });
 

@@ -1,0 +1,98 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+    <meta name="viewport" content="minimal-ui, width=device-width, initial-scale=1, maximum-scale=1"> 
+    <title>Astonishers: The Animated Webcomic</title>
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.css">
+    <link href="styles.css" rel="stylesheet" type="text/css">
+    <!-- JavaScript HTML requirements -->
+	<script src="http://code.jquery.com/jquery-1.8.3.min.js"></script>
+	<script src="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.js"></script>
+	<link rel='stylesheet' href='post_collector.css' />
+</head>
+
+<body>
+	<!-- CONTENT -->
+	<div data-role="page" id="contentPane">
+		
+		<header data-role="header"  data-position="fixed" >
+			<h1 id="pageLabel">Prologue, Page 1</h1>
+			
+    	</header>
+    
+    	<section data-role="content">
+			<div id="mainContent" align="center"></div>
+
+    	</section>
+		<div data-role="footer" data-position="fixed">
+			<div data-role="navbar">
+				<ul>
+					<li><a id="previousPage" data-role="button" data-icon="arrow-l">Previous</a></li>
+					<!--<li><a href="#splashScreen" data-role="button" data-rel="dialog" data-icon="grid">Menu</a></li>-->
+					<li><a id="nextPage" data-role="button" data-icon="arrow-r">Next</a></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+		
+	<!-- NAVIGATION -->
+	<div data-role="page" id="navPane">
+		
+		<header data-role="header"  data-position="fixed">
+			<h1 id="pageLabel">Navigation</h1>
+			
+    	</header>
+    
+    	<section data-role="content">
+			<fieldset class="ui-grid-b">
+				<div class="ui-block-a"><input value="Hmm" type="button"></div>
+				<label for="select-choice-a" class="select">Custom select menu:</label>
+				<select name="select-choice-a" id="select-choice-a" data-native-menu="false">
+					<option>Chapter</option>
+					<option value="standard">Chapter 1</option>
+					<option value="rush">Rush: 3 days</option>
+					<option value="express">Express: next day</option>
+					<option value="overnight">Overnight</option>
+				</select>
+				<div class="ui-block-c"><input value="Yes" type="submit"></div>
+			</fieldset>
+    	</section>
+		
+	</div>
+	
+	<!-- SPLASH -->
+	<div data-role="dialog" id="splashScreen">
+		
+		<header data-role="header"  data-position="fixed">
+			<h1 id="pageLabel">Astonishers</h1>
+			
+    	</header>
+    
+    	<section data-role="content">
+			Welcome to Astonishers: The Animated Webcomic
+			<input id="restart" value="Start at Beginning" type="button">
+			<input id="resume" value="Resume" type="button">
+			<input id="startFromLatest" value="Latest Comic" type="button">
+    	</section>
+		
+	</div>
+	<!-- HELPERS -->
+	<div data-role="page" id="invisibleHelper">
+		
+		<header data-role="header"  data-position="fixed">
+			<h1 id="pageLabel">Astonishers</h1>
+			
+    	</header>
+    
+    	<section data-role="content">
+			
+    	</section>
+		
+	</div>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script> 
+    <script src="jquery.lazyload.min.js" type="text/javascript"></script>
+	<script src="post_collector.js"></script>
+	<a id="showSplashDialog" href="#splashScreen" data-rel="dialog" data-transition="pop">showsplash</a>
+</body>
+</html>

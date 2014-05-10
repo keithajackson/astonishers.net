@@ -8,6 +8,16 @@
     <link href="styles.css" rel="stylesheet" type="text/css">
     <!-- JavaScript HTML requirements -->
 	<script src="http://code.jquery.com/jquery-1.8.3.min.js"></script>
+	<!-- StackOverflow-sourced code to keep next and previous buttons from
+		 getting stuck in the highlighted state.
+		 http://stackoverflow.com/questions/1402698/binding-arrow-keys-in-js-jquery -->
+	<script type="text/javascript">
+        $(document).bind('mobileinit', function() {
+			$(document).on('tap', function(e) {
+				$('.activeOnce').removeClass($.mobile.activeBtnClass);
+			});
+		});
+    </script>
 	<script src="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.js"></script>
 	<link rel='stylesheet' href='post_collector.css' />
 </head>
@@ -28,9 +38,9 @@
 		<div data-role="footer" data-position="fixed">
 			<div data-role="navbar">
 				<ul>
-					<li><a id="previousPage" data-role="button" data-icon="arrow-l">Previous</a></li>
+					<li><a id="previousPage" data-role="button" class="activeOnce" data-icon="arrow-l">Previous</a></li>
 					<!--<li><a href="#splashScreen" data-role="button" data-rel="dialog" data-icon="grid">Menu</a></li>-->
-					<li><a id="nextPage" data-role="button" data-icon="arrow-r">Next</a></li>
+					<li><a id="nextPage" data-role="button" class="activeOnce" data-icon="arrow-r">Next</a></li>
 				</ul>
 			</div>
 		</div>
@@ -90,7 +100,6 @@
     	</section>
 		
 	</div>
-	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script> 
     <script src="jquery.lazyload.min.js" type="text/javascript"></script>
 	<script src="post_collector.js"></script>
 	<a id="showSplashDialog" href="#splashScreen" data-rel="dialog" data-transition="pop">showsplash</a>

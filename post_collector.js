@@ -1,6 +1,5 @@
 // API CALLS
 
-
 function loadPageArrayFromAJAX(tumblrTag, targetArray, startingIndex, callbackFunction) {
 	console.log("Attempting to poll AJAX for a new chapter");
 	$.ajax({
@@ -320,69 +319,26 @@ function setCookie(cname,cvalue,exdays) {
 
 // SplashScreen
 // Contains methods to build and destroy a splash overlay
-function showSplash(hasCookie, latestChapter) {
-	// build layout
-	var overlay = document.createElement("div");
-	overlay.setAttribute("class", "overlay");
-	overlay.setAttribute("id", "overlay");
-	
-	var frame = document.createElement("div");
-	frame.setAttribute("class", "splashbox");
-	frame.setAttribute("id", "splashbox");
-	
-	var titlePrefix = document.createElement("div");
-	titlePrefix.innerHTML = "Welcome to";
-	
-	var titleMain = document.createElement("div");
-	titleMain.innerHTML = "ASTONISHERS";
-	
-	var titlePostfix = document.createElement("div");
-	titlePostfix.innerHTML = "THE ANIMATED WEBCOMIC";
+function showSplash(hasCookie, latestChapter, latestPostDate) {
 
-	var restartButton;
-	
-	var resumeButton = document.createElement("button");
-	resumeButton.setAttribute("id", "resume");
-
-	if(hasCookie == true) {
-		restartButton = document.createElement("button");
-		restartButton.setAttribute("id", "restart");
-		restartButton.innerHTML = "Start Over";
-		resumeButton.innerHTML = "Continue Reading";
+	if(hasCookie == false) {
+			$("#resume").remove();
 	} else {
-		resumeButton.innerHTML = "Start Reading";
+			$("#resume").attr("value", "Resume");
 	}
-	
-	var startLatestButton = document.createElement("button");
-	startLatestButton.setAttribute("id", "startFromLatest");
-	startLatestButton.innerHTML = "Newest Page";
-	
-	var br = document.createElement("br");
-	
-	frame.appendChild(titlePrefix);
-	frame.appendChild(br.cloneNode(false));
-	frame.appendChild(titleMain);
-	frame.appendChild(br.cloneNode(false));
-	frame.appendChild(titlePostfix);
-	frame.appendChild(br.cloneNode(false));
-	
-	if(hasCookie == true) {
-		frame.appendChild(restartButton);
-		frame.appendChild(br.cloneNode(false));
-	}
-	
-	frame.appendChild(resumeButton);
-	frame.appendChild(br.cloneNode(false));
-	frame.appendChild(startLatestButton);
-	document.body.appendChild(overlay);
-	document.body.appendChild(frame);
+	$("#startFromLatest").attr("value", "Latest Comic (" + latestPostDate + ")");
+
+
+	// set up page container for dialog popup
+	$.mobile.changePage("#splashScreen");
 	// set behaviors
 	function killSplash() {
-		if(document.getElementById("splashbox") != null)
-			document.body.removeChild(document.getElementById("splashbox"));
-		if(document.getElementById("overlay") != null)
-			document.body.removeChild(document.getElementById("overlay"));
+		$("#splashScreen").dialog("close");
 	}
+	// if you click the background, dismiss the popup
+	$(".ui-dialog-background").click(function (event) {
+		killSplash();
+	});
 	$("#resume").click(function (event) {
 		killSplash();
 	});
@@ -485,7 +441,7 @@ function displayPage(pageObj) {
 		} else {
 			pageLabel = "Chapter " + currentChapter.getChapterNumber() + ", ";
 		}
-		pageLabel = pageLabel + "Page " + (currentChapter.getCurrentPageNumber() + 1);
+		pageLabel = pageLabel + "Page " + (Number(currentChapter.getCurrentPageNumber()) + 1);
 		$("#pageLabel").html(pageLabel);
 	} else if (displayMode = DISPLAY_MODE_LANDSCAPE) {
 		// This is only called when we are loading the first frame of a page
@@ -571,6 +527,7 @@ $(function(){
 			loadPreviousImage();
 	});
 });
+
 /* JQuery: Populate the table as soon as the page is loaded. */
 $(document).ready(function () {
 	isDesktop = ($(window).width() > 700);
@@ -578,23 +535,23 @@ $(document).ready(function () {
 	// Get latest chapter number and then display the splash/prompt
 	getMostRecentAJAX(function(mostRecentPost) {
 		var hasValidCookie;
-		//var cookieChapter = getCookie("chapter");
-		//var cookiePage = getCookie("page");
-		/* -- CURRENTLY IGNORING THE COOKIES
+		var cookieChapter = getCookie("chapter");
+		var cookiePage = getCookie("page");
 		if(cookieChapter != "" && !isNaN(cookieChapter) && cookiePage != "" && !isNaN(cookiePage) && (cookieChapter != 0 || cookiePage != 0)) {
 			console.log("Loading chapter " + cookieChapter + ", page " + cookiePage);
 			loadChapter(cookieChapter, cookiePage);
 			startChapter = cookieChapter;
 			startPage = cookiePage;
 			hasValidCookie = true;
-		} else { */
+		} else { 
 			// Do NOT update the URL in myLocation, as we want to show the splash again
 			// if the user doesn't click on anything
 			loadChapter(0, 0);
 			console.log("No cookie.  We are starting at the beginning.");
 			hasValidCookie = false;
-		//}
+		}
 		var latestChapter = DEFAULT_LATEST_CHAPTER;
+		var latestPostDate = mostRecentPost.date.substr(0,10);
 		// Figure out latest chapter from the tags of the post
 		for(var i = 0; i < mostRecentPost.tags.length; i++) {
 			if(mostRecentPost.tags[i].substr(0, 8)== "chapter ") {
@@ -604,7 +561,10 @@ $(document).ready(function () {
 			}
 		}
 		
+		// show welcome splash screen
+		showSplash(hasValidCookie, latestChapter, latestPostDate);
 	});
 
 
 });
+

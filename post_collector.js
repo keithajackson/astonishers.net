@@ -325,6 +325,26 @@ function Chapter(chapterID, onLoadCallback) {
 }
 
 
+/*
+'Toast'-style notification
+https://gist.github.com/kamranzafar/3136584
+*/
+var toast=function(msg){
+	$("<div class='ui-loader ui-overlay-shadow ui-body-e ui-corner-all'><h3>"+msg+"</h3></div>")
+		.css({ display: "block",
+			opacity: 0.90,
+			position: "fixed",
+			padding: "7px",
+			"text-align": "center",
+			width: "270px",
+			left: ($(window).width() - 284)/2,
+			top: $(window).height()/2 })
+		.appendTo( $.mobile.pageContainer ).delay( 1500 )
+		.fadeOut( 400, function(){
+			$(this).remove();
+		});
+}
+
 // ------------------
 // INSTANCE VARIABLES
 // ------------------
@@ -529,7 +549,7 @@ function displayChapter(chapterObj, pageIndex, errorMsg) {
 	console.log("Attempting to display page " + pageIndex +" of the chapter we just loaded.");
 	// If the chapter we tried to load is invalid (out of range), we will get an object with zero pages.
 	if(chapterObj.getPageCount() == 0) {
-		console.log(errorMsg);
+		toast(errorMsg);
 	} else {
 		currentChapter = chapterObj;
 		// check if this is supposed to load the last page of the chapter
@@ -711,8 +731,7 @@ $(document).ready(function () {
 			//$("$showSplashNavCheckbox").attr("checked",false).checkboxradio("refresh"); 
 			//showSplash(hasValidCookie, latestChapter, latestPostDate);
 		}
-	});
-
-
+	});	
+	
 });
 

@@ -371,10 +371,15 @@ function showSplash(hasCookie, latestChapter, latestPostDate) {
 
 
 	// set up page container for dialog popup
-	$.mobile.changePage("#splashScreen");
+	$.mobile.changePage("#splashScreen", {
+		role: "dialog",
+		allowSamePageTransition: true,
+		changeHash: true
+	});
+	
 	// set behaviors
 	function killSplash() {
-		$("#splashScreen").dialog("close");
+		$.mobile.changePage("#contentPane");
 	}
 	
 	$("#showSplashCheckbox").click(function(event) {
@@ -460,7 +465,7 @@ function showNavDialog() {
 			var theChapter = Number($(this).prop("chapterNo"));
 			var thePage = Number($(this).prop("pageIx"));
 			console.log("Chapter: " + theChapter + ", page: " + thePage);
-			if(isNaN(theChapter) != true && isNaN(thePage) != true) {
+			if(typeof(theChapter) == "number" && typeof(thePage) == "number") {
 				loadChapter(theChapter, thePage);
 				killSplash();
 			}

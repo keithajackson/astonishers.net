@@ -293,7 +293,7 @@ function Chapter(chapterID, onLoadCallback) {
 			console.log("Page out of range of this chapter.  Returning false.");
 			return false;
 		} else {
-			currentPageIndex = index;
+			currentPageIndex = Number(index);
 			return(pages[index]);
 		}
 	}
@@ -337,6 +337,8 @@ var DEFAULT_LATEST_CHAPTER = 1;
 var LAST_PAGE_OF_THIS_CHAPTER = -1;
 var DISPLAY_MODE_PORTRAIT = "portrait";
 var DISPLAY_MODE_LANDSCAPE = "landscape";
+var toc = new Array();
+var isNavRendered = false;
 // cookie stuff for picking up location where user
 // left off
 // http://www.w3schools.com/js/js_cookies.asp
@@ -371,15 +373,11 @@ function showSplash(hasCookie, latestChapter, latestPostDate) {
 
 
 	// set up page container for dialog popup
-	$.mobile.changePage("#splashScreen", {
-		role: "dialog",
-		allowSamePageTransition: true,
-		changeHash: true
-	});
+	$("#lnkDialog").click();
 	
 	// set behaviors
 	function killSplash() {
-		$.mobile.changePage("#contentPane");
+		$("#splashScreen").dialog("close");
 	}
 	
 	$("#showSplashCheckbox").click(function(event) {
@@ -410,17 +408,17 @@ function showSplash(hasCookie, latestChapter, latestPostDate) {
 }
 
 function showNavDialog() {
-	var toc = new Array();
-	loadTableOfContents(toc, 0, function() {
-		// set up page container for dialog popup
-		$.mobile.changePage("#navPane");
+	$.mobile.changePage("#navPane", {
+		role: 'dialog',
+	});
+	if(isNavRendered == false) {
+		isNavRendered = true;
 		$('#makecollapsible').empty();
-		// Add prologue
 		$('#makecollapsible')
-        .append($('<div>')
-        .attr({
-        'data-role': 'collapsible-set',
-            'id': 'primary'
+		.append($('<div>')
+		.attr({
+		'data-role': 'collapsible-set',
+			'id': 'primary'
 		}));
 		for (i = 0; i < toc.length; i++) {
 			var embHTML = "";
@@ -460,10 +458,11 @@ function showNavDialog() {
 				setCookie("suppressSplash","false",30);
 			}
 		});
-		$("#makecollapsible div a.ui-btn").click(function (event) {
+		$('#makecollapsible div a[data-role="button"]').bind('click', function (event) {
 			console.log("Clicked a generated button!");
-			var theChapter = Number($(this).prop("chapterNo"));
-			var thePage = Number($(this).prop("pageIx"));
+			console.log(this);
+			var theChapter = Number(this.getAttribute("chapterno"));
+			var thePage = Number(this.getAttribute("pageix"));
 			console.log("Chapter: " + theChapter + ", page: " + thePage);
 			if(typeof(theChapter) == "number" && typeof(thePage) == "number") {
 				loadChapter(theChapter, thePage);
@@ -480,7 +479,7 @@ function showNavDialog() {
 			loadChapter(latestChapter, LAST_PAGE_OF_THIS_CHAPTER);
 			killSplash();
 		});
-	});
+	}
 }
 
 function loadPage(pageIndex) {
@@ -665,6 +664,8 @@ $(function(){
 /* JQuery: Populate the table as soon as the page is loaded. */
 $(document).ready(function () {
 	isDesktop = ($(window).width() > 700);
+	// hide nav
+	$('.ui-btn-right').closest('.ui-btn').hide();
 	
 	// Get latest chapter number and then display the splash/prompt
 	getMostRecentAJAX(function(mostRecentPost) {
@@ -695,7 +696,12 @@ $(document).ready(function () {
 				break;
 			}
 		}
+		// load nav
 		
+		loadTableOfContents(toc, 0, function() {
+			// make nav visible
+			$('.ui-btn-right').closest('.ui-btn').show();
+		});
 		// show welcome splash screen
 		if(suppressSplash == "true") {
 			// change nav dialog setting
@@ -703,7 +709,7 @@ $(document).ready(function () {
 			//$("$showSplashNavCheckbox").attr("checked",false).checkboxradio("refresh"); 
 		} else {
 			//$("$showSplashNavCheckbox").attr("checked",false).checkboxradio("refresh"); 
-			showSplash(hasValidCookie, latestChapter, latestPostDate);
+			//showSplash(hasValidCookie, latestChapter, latestPostDate);
 		}
 	});
 

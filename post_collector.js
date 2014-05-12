@@ -350,7 +350,6 @@ var toast=function(msg){
 // ------------------
 var isDesktop;
 var displayMode = "portrait";	// TODO: make this change dynamically
-var showSplashDialog = true;
 var currentChapter;
 var latestChapter;
 var DEFAULT_LATEST_CHAPTER = 1;
@@ -378,54 +377,6 @@ function setCookie(cname,cvalue,exdays) {
 	var expires = "expires="+d.toGMTString();
 	document.cookie = cname + "=" + cvalue + "; " + expires;
 } 
-
-
-// SplashScreen
-// Contains methods to build and destroy a splash overlay
-function showSplash(hasCookie, latestChapter, latestPostDate) {
-
-	if(hasCookie == false) {
-			$("#resume").remove();
-	} else {
-			$("#resume").attr("value", "Resume");
-	}
-	$("#startFromLatest").attr("value", "Latest Comic (" + latestPostDate + ")");
-
-
-	// set up page container for dialog popup
-	$("#lnkDialog").click();
-	
-	// set behaviors
-	function killSplash() {
-		$("#splashScreen").dialog("close");
-	}
-	
-	$("#showSplashCheckbox").click(function(event) {
-		console.log("Splash checkbox is " + $("#showSplashCheckbox").prop("checked"));
-		if($("#showSplashCheckbox").prop("checked") == false) {
-			setCookie("suppressSplash","true",30);
-		} else {
-			setCookie("suppressSplash","false",30);
-		}
-	});
-	// if you click the background, dismiss the popup
-	$(".ui-dialog-background").click(function (event) {
-		killSplash();
-	});
-	$("#resume").click(function (event) {
-		killSplash();
-	});
-	$("#restart").click(function (event) {
-		// jump to prologue;
-		loadChapter(0, 0);
-		killSplash();
-	});
-
-	$("#startFromLatest").click(function (event) {
-		loadChapter(latestChapter, LAST_PAGE_OF_THIS_CHAPTER);
-		killSplash();
-	});
-}
 
 function showNavDialog() {
 	$.mobile.changePage("#navPane", {
@@ -469,15 +420,6 @@ function showNavDialog() {
 		function killSplash() {
 			$("#navPane").dialog("close");
 		}
-		// change splash cookie setting if user clicks checkbox
-		$("#showSplashCheckbox").click(function(event) {
-			console.log("Splash checkbox is " + $("#showSplashCheckbox").prop("checked"));
-			if($("#showSplashCheckbox").prop("checked") == false) {
-				setCookie("suppressSplash","true",30);
-			} else {
-				setCookie("suppressSplash","false",30);
-			}
-		});
 		$('#makecollapsible div a[data-role="button"]').bind('click', function (event) {
 			console.log("Clicked a generated button!");
 			console.log(this);
@@ -722,15 +664,6 @@ $(document).ready(function () {
 			// make nav visible
 			$('.ui-btn-right').closest('.ui-btn').show();
 		});
-		// show welcome splash screen
-		if(suppressSplash == "true") {
-			// change nav dialog setting
-			
-			//$("$showSplashNavCheckbox").attr("checked",false).checkboxradio("refresh"); 
-		} else {
-			//$("$showSplashNavCheckbox").attr("checked",false).checkboxradio("refresh"); 
-			//showSplash(hasValidCookie, latestChapter, latestPostDate);
-		}
 	});	
 	
 });

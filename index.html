@@ -16,14 +16,14 @@
 				$('.activeOnce').removeClass($.mobile.activeBtnClass);
 			});
 		});
-		$(function() {
+		/*$(function() {
 			$('div[data-role="dialog"]').live('pagebeforeshow', function(e, ui) {
 				ui.prevPage.addClass("ui-dialog-background ");
 			});
 			$('div[data-role="dialog"]').live('pagehide', function(e, ui) {
 				$(".ui-dialog-background ").removeClass("ui-dialog-background ");
 			});
-		});
+		});*/
     </script>
 	<script src="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.js"></script>
 	<link rel='stylesheet' href='post_collector.css' />
@@ -35,7 +35,7 @@
 		
 		<header data-role="header"  data-position="fixed" >
 			<h1 id="pageLabel">Prologue, Page 1</h1>
-			<a id="showNavBtn" data-rel="dialog" data-transition="pop" data-icon="grid" class="ui-btn-right">Navigation</a>
+			<a id="showNavBtn" data-rel="dialog" data-transition="pop" data-icon="grid" class="ui-btn-right" data-iconpos="notext">Navigation</a>
     	</header>
     
     	<section data-role="content">
@@ -69,26 +69,12 @@
 				<a id="latestPage" data-role="button">Latest Page</a>
 			</div>
     	</section>
-		
-	</div>
-	<!-- SPLASH -->
-	<div data-role="dialog" data-url="splashScreen" id="splashScreen">
-		<header data-role="header"  data-position="fixed" >
-			<h1>Astonishers</h1>			
-		</header>
-		<section data-role="content" id="splashTextDetail">
-			<p>Welcome to</p>
-			<h1>ASTONISHERS</h1>
-			<h2>THE ANIMATED WEBCOMIC</h2>
-			<input id="restart" value="Start at Beginning" type="button">
-			<input id="resume" value="Resume" type="button">
-			<input id="startFromLatest" value="Latest Comic" type="button">
-			<input id="showSplashCheckbox" checked="true" name="showSplashCheckbox" type="checkbox" />
-			<label for="showSplashCheckbox">Show This Dialog Again</label>
+		<section data-role="footer">
+			<p align="center">Astonishers Reader v. 3.1.2<br>
+			Having site issues? <a href="mailto:i@keithajackson.com">Contact the developer</a>
+			</p>
 		</section>
-		
 	</div>
-	<a id='lnkDialog' href="#splashScreen" data-rel="dialog" data-transition="pop" style='display:none;'></a>
 	<script src="post_collector.js"></script>
 </body>
 </html>

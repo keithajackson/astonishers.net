@@ -1,5 +1,45 @@
 // API CALLS
 
+function loadTableOfContents(targetArray, startingChapter, callbackFunction) {
+	console.log("Attempting to get post count AJAX for a new chapter");
+	var theTag;
+	if(startingChapter == 0) {
+		theTag = "prologue";
+	} else {
+		theTag = "chapter " + startingChapter;
+	}
+	$.ajax({
+			url: "http://api.tumblr.com/v2/blog/astonishers.tumblr.com/posts?callback=?",
+			data : ({
+				api_key: 'BoJ3Xrg6F6oJA1T5TmK7bn387agH9oAwGV4FoMRBET2rSSYwYK',
+				tag: theTag,
+			}),
+
+			dataType: "jsonp",
+
+			success: function (data) {
+				console.log("Got response attempting to read " + theTag);
+				console.log(data);
+				
+				// If we have an empty response, we have finished the last chapter
+				if(data.response.total_posts <= 0) {
+					console.log("We are done loading the array.  Now running the callback function...");
+					if(callbackFunction != null) {
+						callbackFunction();
+					}
+				} else {
+					// Store this chapter's page count
+					targetArray.push(data.response.total_posts);
+					console.log("There are more chapters to count.  Calling again...");
+					// do a lookup for the next chapter
+					startingChapter = Number(startingChapter) + 1;
+					loadTableOfContents(targetArray, startingChapter, callbackFunction);
+				}
+				
+			}
+		})
+}
+
 function loadPageArrayFromAJAX(tumblrTag, targetArray, startingIndex, callbackFunction) {
 	console.log("Attempting to poll AJAX for a new chapter");
 	$.ajax({
@@ -290,8 +330,9 @@ function Chapter(chapterID, onLoadCallback) {
 // ------------------
 var isDesktop;
 var displayMode = "portrait";	// TODO: make this change dynamically
-var showSplash;
+var showSplashDialog = true;
 var currentChapter;
+var latestChapter;
 var DEFAULT_LATEST_CHAPTER = 1;
 var LAST_PAGE_OF_THIS_CHAPTER = -1;
 var DISPLAY_MODE_PORTRAIT = "portrait";
@@ -335,6 +376,15 @@ function showSplash(hasCookie, latestChapter, latestPostDate) {
 	function killSplash() {
 		$("#splashScreen").dialog("close");
 	}
+	
+	$("#showSplashCheckbox").click(function(event) {
+		console.log("Splash checkbox is " + $("#showSplashCheckbox").prop("checked"));
+		if($("#showSplashCheckbox").prop("checked") == false) {
+			setCookie("suppressSplash","true",30);
+		} else {
+			setCookie("suppressSplash","false",30);
+		}
+	});
 	// if you click the background, dismiss the popup
 	$(".ui-dialog-background").click(function (event) {
 		killSplash();
@@ -351,6 +401,80 @@ function showSplash(hasCookie, latestChapter, latestPostDate) {
 	$("#startFromLatest").click(function (event) {
 		loadChapter(latestChapter, LAST_PAGE_OF_THIS_CHAPTER);
 		killSplash();
+	});
+}
+
+function showNavDialog() {
+	var toc = new Array();
+	loadTableOfContents(toc, 0, function() {
+		// set up page container for dialog popup
+		$.mobile.changePage("#navPane");
+		$('#makecollapsible').empty();
+		// Add prologue
+		$('#makecollapsible')
+        .append($('<div>')
+        .attr({
+        'data-role': 'collapsible-set',
+            'id': 'primary'
+		}));
+		for (i = 0; i < toc.length; i++) {
+			var embHTML = "";
+			for(var page = 0; page < toc[i]; page++) {
+				console.log("Adding a page");
+				embHTML = embHTML + $('<div>').append(($('<a>')
+					.attr({
+						'data-role' : 'button',
+						'chapterNo' : i,
+						'pageIx': page,
+					})
+						.html("Page " + (Number(page) + 1)))).html();
+			}
+			var chapterString = "Chapter " + i;
+			if (i == 0)
+				chapterString = "Prologue";
+			($('<div>')
+				.attr({
+				'data-role': 'collapsible',
+					'data-content-theme': 'c',
+					'data-collapsed': 'true'
+			})
+				.html('<h4>' + chapterString + '</h4>' + embHTML))
+				.appendTo('#primary');
+		}
+		$('#makecollapsible').collapsibleset().trigger('create');
+		// set behaviors
+		function killSplash() {
+			$("#navPane").dialog("close");
+		}
+		// change splash cookie setting if user clicks checkbox
+		$("#showSplashCheckbox").click(function(event) {
+			console.log("Splash checkbox is " + $("#showSplashCheckbox").prop("checked"));
+			if($("#showSplashCheckbox").prop("checked") == false) {
+				setCookie("suppressSplash","true",30);
+			} else {
+				setCookie("suppressSplash","false",30);
+			}
+		});
+		$("#makecollapsible div a.ui-btn").click(function (event) {
+			console.log("Clicked a generated button!");
+			var theChapter = Number($(this).prop("chapterNo"));
+			var thePage = Number($(this).prop("pageIx"));
+			console.log("Chapter: " + theChapter + ", page: " + thePage);
+			if(isNaN(theChapter) != true && isNaN(thePage) != true) {
+				loadChapter(theChapter, thePage);
+				killSplash();
+			}
+		});
+		$("#firstPage").click(function (event) {
+			// jump to prologue;
+			loadChapter(0, 0);
+			killSplash();
+		});
+
+		$("#latestPage").click(function (event) {
+			loadChapter(latestChapter, LAST_PAGE_OF_THIS_CHAPTER);
+			killSplash();
+		});
 	});
 }
 
@@ -502,6 +626,11 @@ $("#previousPage").click(function(event) {
 		loadPreviousPage();
 });
 
+$("#showNavBtn").click(function(event) {
+	// load chapter list
+	showNavDialog();
+});
+
 $(document).keydown(function(e){
     if (e.keyCode == 37) {	// left arrow 
        	if(displayMode == DISPLAY_MODE_LANDSCAPE)
@@ -537,6 +666,7 @@ $(document).ready(function () {
 		var hasValidCookie;
 		var cookieChapter = getCookie("chapter");
 		var cookiePage = getCookie("page");
+		var suppressSplash = getCookie("suppressSplash");
 		if(cookieChapter != "" && !isNaN(cookieChapter) && cookiePage != "" && !isNaN(cookiePage) && (cookieChapter != 0 || cookiePage != 0)) {
 			console.log("Loading chapter " + cookieChapter + ", page " + cookiePage);
 			loadChapter(cookieChapter, cookiePage);
@@ -550,7 +680,7 @@ $(document).ready(function () {
 			console.log("No cookie.  We are starting at the beginning.");
 			hasValidCookie = false;
 		}
-		var latestChapter = DEFAULT_LATEST_CHAPTER;
+		latestChapter = DEFAULT_LATEST_CHAPTER;
 		var latestPostDate = mostRecentPost.date.substr(0,10);
 		// Figure out latest chapter from the tags of the post
 		for(var i = 0; i < mostRecentPost.tags.length; i++) {
@@ -562,7 +692,14 @@ $(document).ready(function () {
 		}
 		
 		// show welcome splash screen
-		showSplash(hasValidCookie, latestChapter, latestPostDate);
+		if(suppressSplash == "true") {
+			// change nav dialog setting
+			
+			//$("$showSplashNavCheckbox").attr("checked",false).checkboxradio("refresh"); 
+		} else {
+			//$("$showSplashNavCheckbox").attr("checked",false).checkboxradio("refresh"); 
+			showSplash(hasValidCookie, latestChapter, latestPostDate);
+		}
 	});
 
 

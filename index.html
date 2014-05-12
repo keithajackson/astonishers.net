@@ -35,7 +35,7 @@
 		
 		<header data-role="header"  data-position="fixed" >
 			<h1 id="pageLabel">Prologue, Page 1</h1>
-			<a href="index.html" data-icon="menu"></a>
+			<!--<a id="showNavBtn" data-rel="dialog" data-transition="pop" data-icon="grid" class="ui-btn-right">Navigation</a>-->
     	</header>
     
     	<section data-role="content">
@@ -54,31 +54,27 @@
 	</div>
 		
 	<!-- NAVIGATION -->
-	<div data-role="page" id="navPane">
+	<div data-role="dialog" id="navPane">
 		
 		<header data-role="header"  data-position="fixed">
-			<h1 id="pageLabel">Navigation</h1>
+			<h1>Navigation</h1>
 			
     	</header>
     
     	<section data-role="content">
-			<fieldset class="ui-grid-b">
-				<div class="ui-block-a"><input value="Hmm" type="button"></div>
-				<label for="select-choice-a" class="select">Custom select menu:</label>
-				<select name="select-choice-a" id="select-choice-a" data-native-menu="false">
-					<option>Chapter</option>
-					<option value="standard">Chapter 1</option>
-					<option value="rush">Rush: 3 days</option>
-					<option value="express">Express: next day</option>
-					<option value="overnight">Overnight</option>
-				</select>
-				<div class="ui-block-c"><input value="Yes" type="submit"></div>
-			</fieldset>
+			<div data-role="controlgroup" data-type="horizontal">
+				<a id="firstPage" data-role="button">Start Over</a>
+				<a id="latestPage" data-role="button">Latest Page</a>
+			</div>
+			<label for="chapterSelection">Chapter Selection</label>
+			<form id="chapterSelection">
+			</form>
+			<form id="makecollapsible"></form>
     	</section>
 		
 	</div>
 	<!-- SPLASH -->
-	<div data-role="dialog" id="splashScreen" data-close-btn="none">
+	<div data-role="dialog" id="splashScreen">
 		<header data-role="header"  data-position="fixed" >
 			<h1>Astonishers</h1>			
 		</header>
@@ -89,6 +85,8 @@
 			<input id="restart" value="Start at Beginning" type="button">
 			<input id="resume" value="Resume" type="button">
 			<input id="startFromLatest" value="Latest Comic" type="button">
+			<input id="showSplashCheckbox" checked="true" name="showSplashCheckbox" type="checkbox" />
+			<label for="showSplashCheckbox">Show This Dialog Again</label>
 		</section>
 		
 	</div>

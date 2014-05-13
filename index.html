@@ -1,61 +1,60 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
-<head>
-	<meta charset="UTF-8">
-    <meta name="viewport" content="minimal-ui, width=device-width, initial-scale=1, maximum-scale=1"> 
-    <title>Astonishers: The Animated Webcomic</title>
-	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.css" />
-	<script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
-	<script src="jq_preload_settings.js"></script>
-	<script src="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.js"></script>
-	<link rel='stylesheet' href='post_collector.css' />
-</head>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="minimal-ui, width=device-width, initial-scale=1, maximum-scale=1"> 
+		<title>Astonishers: The Animated Webcomic</title>
+		<link rel="stylesheet" href="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.css" />
+		<script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+		<script src="jq_preload_settings.js"></script>
+		<script src="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.js"></script>
+		<link rel='stylesheet' href='post_collector.css' />
+	</head>
 
-<body>
-	<!-- CONTENT -->
-	<div data-role="page" id="contentPane">
+	<body>
+		<!-- CONTENT -->
+		<div data-role="page" id="contentPane">
+			
+			<header data-role="header"  data-position="fixed" >
+				<h1 id="pageLabel">Astonishers, the Animated Webcomic</h1>
+				<a href="#about" data-rel="popup" data-transition="pop" data-icon="info" class="ui-btn-right" data-iconpos="notext">About</a>
+			</header>
 		
-		<div data-role="header"  data-position="fixed" >
-			<h1 id="pageLabel">Prologue, Page 1</h1>
-    	</div>
-    
-    	<div data-role="content" role="main">
-			<div id="mainContent" align="center"></div>
-    	</div>
-		
-		<!-- NAVIGATION -->
-		<div data-role="popup" id="navPane">
-		
-			<div data-role="content">
-				<label for="makecollapsible">Chapter Selection</label>
-				<form id="makecollapsible"></form>
-				<label for="quicklinks">Quick Links</label>
-				<div id="quicklinks" data-role="controlgroup" data-type="vertical">
-					<a id="firstPage" data-role="button">First Page</a>
-					<a id="latestPage" data-role="button">Latest Page</a>
+			<div data-role="content" role="main">
+				<div id="mainContent" align="center"></div>
+			</div>
+			<!-- ABOUT PAGE -->
+			<div data-role="popup" id="about">
+					<p align="center">Created by <a href="http://ctrayn.weebly.com">Chel Traynor</a><br>
+					Follow on <a href="http://astonishers.tumblr.com">Tumblr</a>/<a href="http://twitter.com/tweetstonishers">Twitter</a><br>
+					Reader (v. 3.2) by <a href="https://www.linkedin.com/pub/keith-jackson/22/bb7/2b2">Keith Jackson</a><br>
+					Site issues? <a href="mailto:i@keithajackson.com">Contact the developer</a>
+					</p>
+			</div>
+			<!-- NAVIGATION -->
+			<div data-role="popup" id="navPane">
+			
+				<div data-role="content">
+					<label for="makecollapsible">Chapter Selection</label>
+					<form id="makecollapsible"></form>
+					<label for="quicklinks">Quick Links</label>
+					<div id="quicklinks" data-role="controlgroup" data-type="vertical">
+						<a id="firstPage" data-role="button">First Page</a>
+						<a id="latestPage" data-role="button">Latest Page</a>
+					</div>
 				</div>
 			</div>
-			<!--<div data-role="footer">
-				<p align="center">Astonishers created by <a href="http://ctrayn.tumblr.com">Chel Traynor</a><br>
-				Follow on <a href="http://astonishers.tumblr.com">Tumblr</a>/<a href="http://twitter.com/tweetstonishers">Twitter</a><br>
-				Reader (v. 3.1.7) by <a href="https://www.linkedin.com/pub/keith-jackson/22/bb7/2b2">Keith Jackson</a><br>
-				Having site issues? <a href="mailto:i@keithajackson.com">Contact the developer</a>
-				</p>
-			</div>-->
-		</div>
-		
-		<div data-role="footer" data-position="fixed">
-			<div data-role="navbar">
-				<ul>
-					<li><a id="previousPage" data-role="button" class="activeOnce" data-icon="arrow-l">Previous</a></li>
-					<li><a id="showNavBtn" class="activeOnce" data-transition="pop" data-icon="grid" >Navigation</a></li>
-					<li><a id="nextPage" data-role="button" class="activeOnce" data-icon="arrow-r">Next</a></li>
-				</ul>
+			
+			<div data-role="footer" data-position="fixed">
+				<div data-role="navbar">
+					<ul>
+						<li><a id="previousPage" data-role="button" class="activeOnce" data-icon="arrow-l">Previous</a></li>
+						<li><a id="showNavBtn" class="activeOnce" data-transition="pop" data-icon="grid" >Navigation</a></li>
+						<li><a id="nextPage" data-role="button" class="activeOnce" data-icon="arrow-r">Next</a></li>
+					</ul>
+				</div>
 			</div>
 		</div>
-	</div>
-	
-	
-	<script src="post_collector.js"></script>
-</body>
+		<script src="post_collector.js"></script>
+	</body>
 </html>

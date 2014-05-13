@@ -23,27 +23,13 @@
 #splashScreen .ui-header a {
 	display: none;
 }
-/* ref: https://forum.jquery.com/topic/expanding-the-default-jquerymobile-popup-width-to-a-of-screen */
-
-
-/* Tom Clarkson's algorithm for transparent background for overlays 
- http://tqclarkson.com/2012/04/19/transparent-jquery-mobile-dialogs/ */
-.ui-dialog-background {
-opacity: 0.5;
-display: block !important;
--webkit-transition: opacity 0.5s ease-in;
+/*  Makes the navigation popup take up a decent screen space
+ref: https://forum.jquery.com/topic/expanding-the-default-jquerymobile-popup-width-to-a-of-screen */
+#navPane-popup {
+    width: 60%;
+    left: 10%;
+    right: 10%
 }
- 
-.ui-dialog-background.pop.in {
-opacity: 1;
--webkit-transition: opacity 0.5s ease-in;
-}
- 
-.ui-dialog {
-min-height: 100% !important;
-background: transparent !important;
-}
-/* End of Tom Clarkson's algorithm */
 .ui-page {
 	background:#000000
 }

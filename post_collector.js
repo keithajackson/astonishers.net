@@ -638,8 +638,6 @@ $(function(){
 /* JQuery: Populate the table as soon as the page is loaded. */
 $('#contentPane').on('pageinit', function() {
 	isDesktop = ($(window).width() > 700);
-	// hide nav
-	$('.ui-btn-right').closest('.ui-btn').hide();
 	
 	// Get latest chapter number and then display the splash/prompt
 	getMostRecentAJAX(function(mostRecentPost) {

@@ -358,6 +358,8 @@ var DISPLAY_MODE_PORTRAIT = "portrait";
 var DISPLAY_MODE_LANDSCAPE = "landscape";
 var toc = new Array();
 var isNavRendered = false;
+var isTOCLoaded = false;
+var isNavPopupWaiting = false;
 // cookie stuff for picking up location where user
 // left off
 // http://www.w3schools.com/js/js_cookies.asp
@@ -379,69 +381,8 @@ function setCookie(cname,cvalue,exdays) {
 } 
 
 function showNavDialog() {
-	$.mobile.changePage("#navPane", {
-		role: 'dialog',
-	});
-	if(isNavRendered == false) {
-		isNavRendered = true;
-		$('#makecollapsible').empty();
-		$('#makecollapsible')
-		.append($('<div>')
-		.attr({
-		'data-role': 'collapsible-set',
-			'id': 'primary'
-		}));
-		for (i = 0; i < toc.length; i++) {
-			var embHTML = "";
-			for(var page = 0; page < toc[i]; page++) {
-				console.log("Adding a page");
-				embHTML = embHTML + $('<div>').append(($('<a>')
-					.attr({
-						'data-role' : 'button',
-						'chapterNo' : i,
-						'pageIx': page,
-					})
-						.html("Page " + (Number(page) + 1)))).html();
-			}
-			var chapterString = "Chapter " + i;
-			if (i == 0)
-				chapterString = "Prologue";
-			($('<div>')
-				.attr({
-				'data-role': 'collapsible',
-					'data-content-theme': 'c',
-					'data-collapsed': 'true'
-			})
-				.html('<h4>' + chapterString + '</h4>' + embHTML))
-				.appendTo('#primary');
-		}
-		$('#makecollapsible').collapsibleset().trigger('create');
-		// set behaviors
-		function killSplash() {
-			$("#navPane").dialog("close");
-		}
-		$('#makecollapsible div a[data-role="button"]').bind('click', function (event) {
-			console.log("Clicked a generated button!");
-			console.log(this);
-			var theChapter = Number(this.getAttribute("chapterno"));
-			var thePage = Number(this.getAttribute("pageix"));
-			console.log("Chapter: " + theChapter + ", page: " + thePage);
-			if(typeof(theChapter) == "number" && typeof(thePage) == "number") {
-				loadChapter(theChapter, thePage);
-				killSplash();
-			}
-		});
-		$("#firstPage").click(function (event) {
-			// jump to prologue;
-			loadChapter(0, 0);
-			killSplash();
-		});
-
-		$("#latestPage").click(function (event) {
-			loadChapter(latestChapter, LAST_PAGE_OF_THIS_CHAPTER);
-			killSplash();
-		});
-	}
+	$("#navPane").popup("open");
+	
 }
 
 function loadPage(pageIndex) {
@@ -578,6 +519,69 @@ function loadPreviousImage() {
 	}
 }
 
+$("#navPane").on("popupbeforeposition", function(event) {
+	if(isNavRendered == false) {
+		isNavRendered = true;
+		$('#makecollapsible').empty();
+		$('#makecollapsible')
+		.append($('<div>')
+		.attr({
+		'data-role': 'collapsible-set',
+			'id': 'primary'
+		}));
+		for (i = 0; i < toc.length; i++) {
+			var embHTML = "";
+			for(var page = 0; page < toc[i]; page++) {
+				console.log("Adding a page");
+				embHTML = embHTML + $('<div>').append(($('<a>')
+					.attr({
+						'data-role' : 'button',
+						'chapterNo' : i,
+						'pageIx': page,
+					})
+						.html("Page " + (Number(page) + 1)))).html();
+			}
+			var chapterString = "Chapter " + i;
+			if (i == 0)
+				chapterString = "Prologue";
+			($('<div>')
+				.attr({
+				'data-role': 'collapsible',
+					'data-content-theme': 'c',
+					'data-collapsed': 'true'
+			})
+				.html('<h4>' + chapterString + '</h4>' + embHTML))
+				.appendTo('#primary');
+		}
+		$('#makecollapsible').collapsibleset().trigger('create');
+		// set behaviors
+		function killSplash() {
+			$("#navPane").popup("close");
+		}
+		$('#makecollapsible div a[data-role="button"]').bind('click', function (event) {
+			console.log("Clicked a generated button!");
+			console.log(this);
+			var theChapter = Number(this.getAttribute("chapterno"));
+			var thePage = Number(this.getAttribute("pageix"));
+			console.log("Chapter: " + theChapter + ", page: " + thePage);
+			if(typeof(theChapter) == "number" && typeof(thePage) == "number") {
+				loadChapter(theChapter, thePage);
+				killSplash();
+			}
+		});
+		$("#firstPage").click(function (event) {
+			// jump to prologue;
+			loadChapter(0, 0);
+			killSplash();
+		});
+
+		$("#latestPage").click(function (event) {
+			loadChapter(latestChapter, LAST_PAGE_OF_THIS_CHAPTER);
+			killSplash();
+		});
+	}
+});
+
 $("#nextPage").click(function(event) {
 	if(displayMode == DISPLAY_MODE_LANDSCAPE)
 		loadNextImage();
@@ -593,8 +597,16 @@ $("#previousPage").click(function(event) {
 });
 
 $("#showNavBtn").click(function(event) {
-	// load chapter list
-	showNavDialog();
+	if(isTOCLoaded == false) {
+		isNavPopupWaiting = true;
+		$.mobile.loading("show", {
+            theme: "b",
+            text: "One moment...",
+            textVisible: true
+          });
+	} else {
+		$("#navPane").popup("open", {positionTo: "window"});
+	}
 });
 
 $(document).keydown(function(e){
@@ -661,8 +673,14 @@ $('#contentPane').on('pageinit', function() {
 		// load nav
 		
 		loadTableOfContents(toc, 0, function() {
-			// make nav visible
-			$('.ui-btn-right').closest('.ui-btn').show();
+			isTOCLoaded = true;
+			// if mobile loading thing is going on, dismiss and show the popup
+			if(isNavPopupWaiting) {
+				// dismiss loading thing
+				$.mobile.loading("hide");
+				// show popup
+				$("#navPane").popup("open", {positionTo: "window"});
+			}
 		});
 	});	
 	

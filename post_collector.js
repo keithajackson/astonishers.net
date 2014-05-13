@@ -624,7 +624,7 @@ $(function(){
 });
 
 /* JQuery: Populate the table as soon as the page is loaded. */
-$(document).ready(function () {
+$('#contentPane').on('pageinit', function() {
 	isDesktop = ($(window).width() > 700);
 	// hide nav
 	$('.ui-btn-right').closest('.ui-btn').hide();

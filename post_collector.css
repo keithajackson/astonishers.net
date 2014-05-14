@@ -25,9 +25,14 @@
 /*  Makes the navigation popup take up a decent screen space
 ref: https://forum.jquery.com/topic/expanding-the-default-jquerymobile-popup-width-to-a-of-screen */
 #navPane-popup {
-    width: 60%;
+    max-width: 80%;
     left: 10%;
     right: 10%
+}
+@media all and (min-width: 350px) {
+	#navPane-popup {
+		width: 300px;
+	}
 }
 .ui-page {
 	background:#000000

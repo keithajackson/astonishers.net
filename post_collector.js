@@ -1,57 +1,20 @@
-// API CALLS
-
-function loadChapterFromAjax(tumblrTag, targetArray, startingIndex, callbackFunction) {
-	console.log("Attempting to poll AJAX for a new chapter");
-	$.ajax({
-			url: "http://api.tumblr.com/v2/blog/astonishers.tumblr.com/posts?callback=?",
-			data : ({
-				api_key: 'BoJ3Xrg6F6oJA1T5TmK7bn387agH9oAwGV4FoMRBET2rSSYwYK',
-				tag: tumblrTag,
-				offset: startingIndex,
-			}),
-
-			dataType: "jsonp",
-
-			success: function (data) {
-				console.log("Got response attempting to read " + tumblrTag + " starting at index " + startingIndex);
-				console.log(data);
-				var arrIndex = targetArray.length;
-				for(var postIndex = data.response.posts.length - 1; postIndex >= 0; postIndex--) {
-					targetArray.push(new Page(data.response.posts[postIndex]));
-					startingIndex++;
-				}
-				
-				console.log("The page array now has " + targetArray.length + " pages.");
-				if((data.response.total_posts - startingIndex) > 0) {
-					console.log("There are " + (data.response.total_posts - startingIndex) + " pages left to load of a total of " + data.response.total_posts + ". Calling again...");
-					loadChapterFromAjax(tumblrTag, targetArray, startingIndex, callbackFunction);
-				} else {
-					console.log("We are done loading the array.  Now running the callback function...");
-					if(callbackFunction != null) {
-						callbackFunction();
-					}
-				}
-				
-			}
-		})
-}
-
 // -------
 // CLASSES
 // -------
 
 // Page
 // Accepts as constructor a JSON object from the Tumblr API
-// and provides methods to load, insert, and remove the page
-// loadImmediately: If true, will blindly try to get a page,
-// rather than waiting on the table of contents. Only use
-// when getting the onload page.
-function Page(postData) {
+// and a page label ("Chapter X, Page Y").
+// Provides methods to load, insert, and remove the page
+function Page(postData, pageLabel) {
 	var self=this;
+	var label = pageLabel;
 	this.id = postData.id;
 	this.type = postData.type;
 	var landscapeIndex = 0;
-	// Different ` if we have a video or photo postData
+	
+	this.getLabel = function() { return label; }
+	// Different if we have a video or photo postData
 	if(this.type == "photo") {
 		var photoURLs = new Array();
 		// Load photo array with ONLY urls, nothing else
@@ -201,105 +164,6 @@ function Page(postData) {
 	}
 }
 
-function Chapter(chapterID, loadImmediately, callback) {
-	var self = this;
-	var pages = new Array();
-	var chaptTag;
-	var chaptID = Number(chapterID);
-	var currentPageIndex = 0;	// index of the currently displayed page
-	var onLoadCallback = callback;
-	console.log("The callback on init:")
-	console.log(onLoadCallback);
-	if(chapterID == 0) {
-		chaptTag = "prologue";
-	} else {
-		chaptTag = "chapter " + chapterID;
-	}
-	
-	this.getPreviousPage = function() {
-		if(currentPageIndex - 1 < 0) {
-			console.log("Page out of range of this chapter.  Returning false.");
-			return false;
-		} else {
-			currentPageIndex--;
-			return(pages[currentPageIndex]);
-		}
-	}
-	
-	this.getNextPage = function() {
-		if(currentPageIndex + 1 >= pages.length) {
-			console.log("Page out of range of this chapter.  Returning false.");
-			return false;
-		} else {
-			currentPageIndex++;
-			return(pages[currentPageIndex]);
-		}
-	}
-	
-	this.getPage = function(index) {
-		if(index >= pages.length) {
-			console.log("Page out of range of this chapter.  Returning false.");
-			return false;
-		} else {
-			currentPageIndex = Number(index);
-			return(pages[index]);
-		}
-	}
-	
-	this.getCurrentPage = function() {
-		if(currentPageIndex >= pages.length || currentPageIndex < 0) {
-			console.log("Page out of range of this chapter.  Returning false.");
-			return false;
-		} else {
-			return(pages[currentPageIndex]);
-		}
-	}
-	
-	this.getChapterNumber = function() {
-		return chaptID;
-	}
-	this.getCurrentPageNumber = function() {
-		return currentPageIndex;
-	}
-	this.getPageCount = function() {
-		return pages.length;
-	}
-	// Ajax request to get this chapter
-	// Called internally if the TOC is initialized
-	// at the time that we are making the chapter
-	// Called externally if we have to wait on the TOC
-	this.getChapterFromAjax = function(hasTOC) {
-		// If we have the TOC, save an AJAX call and see if we are out of range
-		if(hasTOC) {
-			if(toc.length >= chaptID) {
-				// This chapter does not exist. Immediately return as empty
-				console.log("This is the callback:");
-				console.log(onLoadCallback);
-				onLoadCallback(self);
-			}
-		}
-		// If we don't have the TOC (or the page is in range), call AJAX to load.
-		loadChapterFromAjax(chaptTag, pages, 0, function() {
-			console.log("This is the callback:");
-			console.log(onLoadCallback);
-			onLoadCallback(self);
-		});
-	}
-
-	if(loadImmediately) {
-		// ignore TOC and fetch directly
-		console.log("The callback on loadImmediately:")
-		console.log(onLoadCallback);
-		self.getChapterFromAjax(false);
-	} else {
-		// wait on TOC
-		console.log("The callback waiting on TOC:")
-		console.log(onLoadCallback);
-		toc.runWhenLoaded(function () {return self.getChapterFromAjax(true)});
-	}
-	
-}
-		
 function TableOfContents() {
 	var self = this;
 	var pageCountList = new Array();
@@ -320,7 +184,7 @@ function TableOfContents() {
 			if(isLoadingVisible == false) {
 				isLoadingVisible = true;
 				$.mobile.loading("show", {
-					theme: "b",
+					theme: "a",
 					text: "One moment...",
 					textVisible: true
 				  });
@@ -329,14 +193,21 @@ function TableOfContents() {
 	}
 	// First-run load
 	function tocLoadedCallback() {
-		$.mobile.loading("hide");
-		isLoadingVisible = false;
+		console.log("TOC is loaded!");
+		if(isLoadingVisible) {
+			$.mobile.loading("hide");
+			isLoadingVisible = false;
+		}
 		isTOCLoaded = true;
 		// If the user rushed for action(s), fulfill now
 		for(var i = 0; i < waitingOnTOC.length; i++) {
 			waitingOnTOC[i]();
 		}
 		waitingOnTOC.length = 0;
+	}
+	
+	this.isShowingSpinner = function() {
+		return isLoadingVisible;
 	}
 	function loadTableOfContents(targetArray, startingChapter, callbackFunction) {
 		console.log("Attempting to get post count AJAX for a new chapter");
@@ -377,22 +248,334 @@ function TableOfContents() {
 				}
 			});
 	}
-	loadTableOfContents(pageCountList, 0, loadTableOfContents);
-	tocLoadedCallback();
+	loadTableOfContents(pageCountList, 0, tocLoadedCallback);
+	
+	this.getLength = function() {
+		return pageCountList.length;
+	}
+	
+	this.getPageCount = function(chapterIx) {
+		if(Number(chapterIx) < pageCountList.length && Number(chapterIx) >= 0) {
+			return Number(pageCountList[Number(chapterIx)]);
+		} else {
+			return false;
+		}
+	}
+	
+	this.hasChapter = function(chapterIndex) {
+		return (Number(chapterIndex) < pageCountList.length && Number(chapterIndex) >= 0)
+	}
 }
 
-// ---------
-// CONSTANTS
-// ---------
-var LAST_PAGE_OF_THIS_CHAPTER = -1;
+// Any callback call to Book returns a page.
+function Book(startingChapter, startingPage, initDisplayCallback) {
+	/* Eventually change to this:
+	var thisChapter = {
+		this.pages = new Array();
+		this.tag = "";
+		this.label = "";
+		this.id = "";
+		this.currentIndex = "";
+	} */
+	var toc;
+	var self = this;
+	var pages = new Array();
+	var chaptTag;
+	var chaptLabel;
+	var chaptID;
+	var currentPageIndex;
+	var isNavRendered = false;
+	var isLoadingChapter = false;
+	function loadChapterFromAjax(chapterNo, targetArray, startingIndex, callbackFunction) {
+		console.log("Attempting to poll AJAX for a chapter");
+		var tumblrTag
+		if(chapterNo == 0) {
+			tumblrTag = "prologue";
+		} else {
+			tumblrTag = "chapter " + chapterNo;
+		}
+		$.ajax({
+				url: "http://api.tumblr.com/v2/blog/astonishers.tumblr.com/posts?callback=?",
+				data : ({
+					api_key: 'BoJ3Xrg6F6oJA1T5TmK7bn387agH9oAwGV4FoMRBET2rSSYwYK',
+					tag: tumblrTag,
+					offset: startingIndex,
+				}),
 
+				dataType: "jsonp",
+
+				success: function (data) {
+					console.log("Got response attempting to read " + tumblrTag + " starting at index " + startingIndex);
+					console.log(data);
+					
+					// Generate page label
+					var chaptLabel;
+					if(chapterNo == 0) {
+						chaptLabel = "Prologue";
+					} else {
+						chaptLabel = "Chapter " + chapterNo;
+					}
+					var arrIndex = targetArray.length;
+					for(var postIndex = data.response.posts.length - 1; postIndex >= 0; postIndex--) {
+						var pageLabel = chaptLabel + ", Page " + (data.response.posts.length - Number(postIndex));
+						targetArray.push(new Page(data.response.posts[postIndex], pageLabel));
+						startingIndex++;
+					}
+					
+					console.log("The page array now has " + targetArray.length + " pages.");
+					if((data.response.total_posts - startingIndex) > 0) {
+						console.log("There are " + (data.response.total_posts - startingIndex) + " pages left to load of a total of " + data.response.total_posts + ". Calling again...");
+						loadChapterFromAjax(chapterNo, targetArray, startingIndex, callbackFunction);
+					} else {
+						console.log("We are done loading the array.  Now running the callback function...");
+						if(callbackFunction != null) {
+							callbackFunction();
+						}
+					}
+					
+				}
+			})
+	}
+	this.jumpTo = function(chapterID, pageID, loadImmediately, displayCallback) {
+		isLoadingChapter = true;
+		// Set up a loading spinner if it's not already being used
+		if(loadImmediately == false && toc.isShowingSpinner() == false) {
+			$.mobile.loading("show", {
+					theme: "a",
+					text: "One moment...",
+					textVisible: true
+				  });
+		}
+		pages.length = 0;
+		pageID = Number(pageID);
+		chaptID = Number(chapterID);
+		currentPageIndex = Number(pageID);
+		// Ajax request to get this chapter
+		// Called internally if the TOC is initialized
+		// at the time that we are making the chapter
+		// Called externally if we have to wait on the TOC
+		var getChapter = function(hasTOC) {
+			// If we have the TOC, save an AJAX call and see if we are out of range
+			if(hasTOC) {
+				if(chaptID >= toc.getLength()) {
+					// This chapter does not exist. Immediately return as false
+					console.log("The chapter ID " + chaptID + " is out of range of the toc " + toc.getLength());
+					console.log("This is the callback:");
+					console.log(displayCallback);
+					if(toc.isShowingSpinner() == false) {
+						 $.mobile.loading("hide");
+					}
+					isLoadingChapter = false;
+					displayCallback(false);
+				}
+			}
+			console.log("Attempting to load chapter " + chaptID);
+			// If we don't have the TOC (or the page is in range), call AJAX to load.
+			loadChapterFromAjax(chaptID, pages, 0, function() {
+				console.log("This is the callback:");
+				console.log(displayCallback);
+				console.log("Page " + pageID + ":");
+				console.log(pages[Number(pageID)]);
+				if(hasTOC && toc.isShowingSpinner() == false) {
+						 $.mobile.loading("hide");
+				}
+				isLoadingChapter = false;
+				displayCallback(pages[Number(pageID)]);
+			});
+		}
+
+		if(loadImmediately) {
+			// ignore TOC and fetch directly
+			getChapter(false);
+		} else {
+			// wait on TOC
+			toc.runWhenLoaded(function () {return getChapter(true)});
+		}
+	}
+	function loadNextChapter(displayCallback) {
+		// Only attempt this when we are not already trying to load
+		// a chapter (since chapter loading takes some time)
+		if(isLoadingChapter == false) {
+			toc.runWhenLoaded(function () {
+				// Check if the desired chapter exists
+				if(toc.hasChapter(Number(chaptID) + 1)) {
+					// It exists; fetch
+					self.jumpTo(Number(chaptID) + 1, 0, false, function () {
+						displayCallback(pages[currentPageIndex]);
+					});
+				} else {
+					// It does not exist; show error
+					$.mobile.loading("show", {
+						theme: "a",
+						text: "This is the last page.",
+						textVisible: true,
+						textonly: true
+					  });
+					setTimeout(function() { $.mobile.loading("hide"); }, 1000);
+				}
+			});
+		}
+	}
+	function loadPreviousChapter(displayCallback) {
+		// Only attempt this when we are not already trying to load
+		// a chapter (since chapter loading takes some time)
+		if(isLoadingChapter == false) {
+			toc.runWhenLoaded(function () {
+				chaptID = Number(chaptID)
+				// Check if the desired chapter exists
+				console.log("Attempting to load previous chapter:");
+				console.log(chaptID - 1);
+				if(toc.hasChapter(chaptID - 1)) {
+					chNum = chaptID - 1;
+					pgNum = toc.getPageCount(chaptID - 1) - 1
+					// It exists; fetch
+					self.jumpTo(chNum, pgNum, false, function() {
+						displayCallback(pages[currentPageIndex]);
+					});
+				} else {
+					// It does not exist; show error
+					$.mobile.loading("show", {
+						theme: "a",
+						text: "This is the first page.",
+						textVisible: true,
+						textonly: true
+					  });
+					setTimeout(function() { $.mobile.loading("hide"); }, 1000);
+				}
+			});
+		}
+	}		
+	this.getPage = function(index, displayCallback) {
+		if(index >= pages.length) {
+			console.log("Page out of range of this chapter.");
+			displayCallback(false);
+		} else {
+			currentPageIndex = Number(index);
+			displayCallback(pages[index]);
+		}
+	}	
+	this.getCurrentPage = function(displayCallback) {
+		if(currentPageIndex >= pages.length || currentPageIndex < 0) {
+			console.log("Page out of range of this chapter.  Returning false.");
+			displayCallback(false);
+		} else {
+			displayCallback(pages[currentPageIndex]);
+		}
+	}	
+	this.getPreviousPage = function(displayCallback) {
+		toc.runWhenLoaded(function() {
+			if(currentPageIndex - 1 < 0) {
+				console.log("Previous page out of range of this chapter.");
+				// Try to fetch previous chapter
+				loadPreviousChapter(displayCallback);
+			} else {
+				currentPageIndex--;
+				displayCallback(pages[currentPageIndex]);
+			}
+		});
+	}	
+	this.getNextPage = function(displayCallback) {
+		toc.runWhenLoaded(function () {
+			if(currentPageIndex + 1 >= pages.length) {
+				console.log("Next page out of range of this chapter.");
+				loadNextChapter(displayCallback);
+			} else {
+				currentPageIndex++;
+				displayCallback(pages[currentPageIndex]);
+			}
+		});
+	}
+	
+	
+	this.getCurrentChapterNumber = function() {
+		return chaptID;
+	}
+	this.getCurrentPageNumber = function() {
+		return currentPageIndex;
+	}
+	this.getUserTOC = function(hostDiv, displayCallback) {
+		toc.runWhenLoaded(function () {
+			if(isNavRendered == false) {
+				isNavRendered = true;
+				hostDiv.empty();
+				hostDiv
+				.append($('<div>')
+				.attr({
+				'data-role': 'collapsible-set',
+					'id': 'primary'
+				}));
+				for (i = 0; i < toc.getLength(); i++) {
+					var embHTML = "";
+					for(var page = 0; page < toc.getPageCount(i); page++) {
+						console.log("Adding a page");
+						embHTML = embHTML + $('<div>').append(($('<a>')
+							.attr({
+								'data-role' : 'button',
+								'chapterNo' : i,
+								'pageIx': page,
+							})
+								.html("Page " + (Number(page) + 1)))).html();
+					}
+					var chapterString = "Chapter " + i;
+					if (i == 0)
+						chapterString = "Prologue";
+					($('<div>')
+						.attr({
+						'data-role': 'collapsible',
+						'id': 'collapse' + i,
+							'data-content-theme': 'a',
+							'data-collapsed': 'true'
+					})
+						.html('<h4>' + chapterString + '</h4>' + embHTML))
+						.appendTo('#primary');
+				}
+				hostDiv.collapsibleset().trigger('create');
+				// set behaviors
+				function killSplash() {
+					$("#navPane").popup("close");
+				}
+				$('#makecollapsible div a[data-role="button"]').bind('click', function (event) {
+					console.log("Clicked a generated button!");
+					console.log(this);
+					var theChapter = Number(this.getAttribute("chapterno"));
+					var thePage = Number(this.getAttribute("pageix"));
+					console.log("Chapter: " + theChapter + ", page: " + thePage);
+					if(typeof(theChapter) == "number" && typeof(thePage) == "number") {
+						self.jumpTo(theChapter, thePage, false, displayPage);
+						killSplash();
+					}
+				});
+				$("#firstPage").click(function (event) {
+					// jump to prologue;
+					self.jumpTo(0, 0, false, displayPage);
+					killSplash();
+				});
+
+				$("#latestPage").click(function (event) {
+					var lastChapter = toc.getLength() - 1;
+					var lastPage = toc.getPageCount(lastChapter) - 1
+					self.jumpTo(lastChapter, lastPage, false, displayPage);
+					killSplash();
+				});
+			} else {
+				// Collapse all chapters before load
+				for(var i = 0; i < toc.getLength(); i++) {
+					$('#collapse' + i).trigger('collapse').trigger('updatelayout');
+				}
+			}
+			displayCallback();
+		});
+	}
+	
+	// Do initialization
+	self.jumpTo(startingChapter, startingPage, true, initDisplayCallback);
+	toc = new TableOfContents();
+}
+		
 // ------------------
 // INSTANCE VARIABLES
 // ------------------
-var currentChapter;
-var latestChapter;
-var toc;
-var isNavRendered = false;
+var astonishers;
 
 // cookie stuff for picking up location where user
 // left off
@@ -414,207 +597,50 @@ function setCookie(cname,cvalue,exdays) {
 	document.cookie = cname + "=" + cvalue + "; " + expires;
 } 
 
-function showNavDialog() {
-	$("#navPane").popup("open");
-	
-}
-
-function loadPage(pageIndex) {
-	console.log("Attempting to load page: " + pageIndex);
-	var thePage = currentChapter.getPage(pageIndex);
-	
-	if(thePage == false) {
-		console.log("Could not load page.");
-		return false;
-	} else {
-		console.log("Found page. Loading...");
-		console.log(thePage);
-		displayPage(thePage);
-	}
-}
-
-// Get the next page, if it exists
-function loadNextPage() {
-	console.log("Attempting to load next page.");
-	var thePage = currentChapter.getNextPage();
-	
-	if(thePage == false) {
-		console.log("Reached the end of the chapter.  Loading next chapter...");
-		loadNextChapter();
-	} else {
-		console.log("Found next page. Loading...");
-		console.log(thePage);
-		displayPage(thePage);
-	}
-}
-
-// Get the previous page, if it exists
-function loadPreviousPage() {
-	var thePage = currentChapter.getPreviousPage();
-	
-	if(thePage == false) {
-		loadPreviousChapter();
-	} else {
-		console.log("Found previous page. Loading...");
-		console.log(thePage);
-		displayPage(thePage);
-	}
-}
-
-// AJAX callback.  Displays chapter if it exists.
-function displayChapter(chapterObj, pageIndex, errorMsg) {
-	console.log("Attempting to display page " + pageIndex +" of the chapter we just loaded.");
-	// If the chapter we tried to load is invalid (out of range), we will get an object with zero pages.
-	if(chapterObj.getPageCount() == 0) {
-		// Notify the user that the page could not be loaded
-		toc.runWhenLoaded(function () {
-			$.mobile.loading( 'show', {text: errorMsg, textonly: true });
-			setTimeout(function() { $.mobile.loading("hide"); }, 300);
-		});
-	} else {
-		currentChapter = chapterObj;
-		// check if this is supposed to load the last page of the chapter
-		if(pageIndex == LAST_PAGE_OF_THIS_CHAPTER) {
-			pageIndex = currentChapter.getPageCount() - 1;
-			console.log("Attempting to load the LAST page of this chapter (" + pageIndex + ")");
-		}
-		// try to display page
-		if(loadPage(pageIndex) == false) {
-			// if it fails try the first page
-			console.log("Failed to load the page at the given index; loading page 0.");
-			loadPage(0);
-		}
-	}
-	
-}
-
 // Takes a Page object and actually prints it to the
 // screen.  Uses the global variable displayMode to
 // decide whether we're making a portrait or landscape-style
 // page.
 function displayPage(pageObj) {
-	$("#mainContent").empty();
-	$("#mainContent").html(pageObj.getPortraitHTML());
-	window.scrollTo(0, 0);
-	// Change the header
-	// get page,chapter
-	var pageLabel;
-	if(currentChapter.getChapterNumber() == 0) {
-		pageLabel = "Prologue, "
-	} else {
-		pageLabel = "Chapter " + currentChapter.getChapterNumber() + ", ";
+	console.log(pageObj)
+	if(pageObj == false)
+		console.log("Failed to load page.")
+	else {
+		$("#mainContent").empty();
+		$("#mainContent").html(pageObj.getPortraitHTML());
+		window.scrollTo(0, 0);
+		
+		// Set the header
+		$("#pageLabel").html(pageObj.getLabel());
+
+		// save place in cookie
+		setCookie("chapter", astonishers.getCurrentChapterNumber(),30);
+		setCookie("page", astonishers.getCurrentPageNumber(),30);
 	}
-	pageLabel = pageLabel + "Page " + (Number(currentChapter.getCurrentPageNumber()) + 1);
-	$("#pageLabel").html(pageLabel);
-
-	// save place in cookie
-	setCookie("chapter",currentChapter.getChapterNumber(),30);
-	setCookie("page",currentChapter.getCurrentPageNumber(),30);
 }
 
-function loadNextChapter() {
-	new Chapter(currentChapter.getChapterNumber() + 1, false, function(newChapterObj) {displayChapter(newChapterObj, 0, "This is the last page.")});
-}
-
-function loadPreviousChapter() {
-	new Chapter(currentChapter.getChapterNumber() - 1, false, function(newChapterObj) {displayChapter(newChapterObj, LAST_PAGE_OF_THIS_CHAPTER, "This is the first page.")});
-}
-
-function loadChapter(chapterIndex, pageIndex, loadImmediately) {
-	console.log("Loading chapter " + pageIndex);
-	new Chapter(chapterIndex, loadImmediately, function(newChapterObj) {displayChapter(newChapterObj, pageIndex, "Cannot load chapter " + chapterIndex + ", page " + pageIndex + ".")});
-}
-
-$("#navPane").on("popupbeforeposition", function(event) {
-	if(isNavRendered == false) {
-		isNavRendered = true;
-		$('#makecollapsible').empty();
-		$('#makecollapsible')
-		.append($('<div>')
-		.attr({
-		'data-role': 'collapsible-set',
-			'id': 'primary'
-		}));
-		for (i = 0; i < toc.length; i++) {
-			var embHTML = "";
-			for(var page = 0; page < toc[i]; page++) {
-				console.log("Adding a page");
-				embHTML = embHTML + $('<div>').append(($('<a>')
-					.attr({
-						'data-role' : 'button',
-						'chapterNo' : i,
-						'pageIx': page,
-					})
-						.html("Page " + (Number(page) + 1)))).html();
-			}
-			var chapterString = "Chapter " + i;
-			if (i == 0)
-				chapterString = "Prologue";
-			($('<div>')
-				.attr({
-				'data-role': 'collapsible',
-					'data-content-theme': 'c',
-					'data-collapsed': 'true'
-			})
-				.html('<h4>' + chapterString + '</h4>' + embHTML))
-				.appendTo('#primary');
-		}
-		$('#makecollapsible').collapsibleset().trigger('create');
-		// set behaviors
-		function killSplash() {
-			$("#navPane").popup("close");
-		}
-		$('#makecollapsible div a[data-role="button"]').bind('click', function (event) {
-			console.log("Clicked a generated button!");
-			console.log(this);
-			var theChapter = Number(this.getAttribute("chapterno"));
-			var thePage = Number(this.getAttribute("pageix"));
-			console.log("Chapter: " + theChapter + ", page: " + thePage);
-			if(typeof(theChapter) == "number" && typeof(thePage) == "number") {
-				loadChapter(theChapter, thePage, false);
-				killSplash();
-			}
-		});
-		$("#firstPage").click(function (event) {
-			// jump to prologue;
-			loadChapter(0, 0, false);
-			killSplash();
-		});
-
-		$("#latestPage").click(function (event) {
-			loadChapter(toc.length - 1, toc[toc.length - 1] - 1, false);
-			killSplash();
-		});
-	}
+$("#previousPage").click(function(event) {
+	astonishers.getPreviousPage(displayPage);
 });
 
 $("#nextPage").click(function(event) {
-	toc.runWhenLoaded(loadNextPage);
-});
-
-$("#previousPage").click(function(event) {
-	toc.runWhenLoaded(loadPreviousPage);
-});
-
-$("#showNavBtn").click(function(event) {
-	toc.runWhenLoaded(function () {$("#navPane").popup("open", {positionTo: "window"})});
+	astonishers.getNextPage(displayPage);
 });
 
 $(document).keydown(function(e){
     if (e.keyCode == 37) {	// left arrow 
-		toc.runWhenLoaded(loadPreviousPage);
+		astonishers.getPreviousPage(displayPage);
     }
 	else if (e.keyCode == 39){
-		toc.runWhenLoaded(loadNextPage);
+		astonishers.getNextPage(displayPage);
 	}
 });
 
-
-
-
+$("#showNavBtn").click(function(event) {
+	astonishers.getUserTOC($('#makecollapsible'), function() {$("#navPane").popup("open", {positionTo: "window"});});
+});
 
 $('#contentPane').on('pageinit', function() {
-	toc = new TableOfContents();
 	// Immediately load page (without TOC)
 	var hasValidCookie;
 	var cookieChapter = getCookie("chapter");
@@ -624,13 +650,13 @@ $('#contentPane').on('pageinit', function() {
 	// Check if the cookie chapter/page is valid
 	if(cookieChapter != "" && !isNaN(cookieChapter) && cookiePage != "" && !isNaN(cookiePage)) {
 		console.log("Loading chapter " + cookieChapter + ", page " + cookiePage);
-		loadChapter(cookieChapter, cookiePage, true);
+		astonishers = new Book(cookieChapter, cookiePage, displayPage);
 		startChapter = cookieChapter;
 		startPage = cookiePage;
 		hasValidCookie = true;
 	} else {
 		console.log("No cookie.  We are starting at the beginning.");
-		loadChapter(0, 0, true);
+		astonishers = new Book(0, 0, displayPage);
 		hasValidCookie = false;
 	}
 	

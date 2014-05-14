@@ -30,6 +30,7 @@ There are several features yet to be implemented in this site, as well as optimi
 - Generalize the "Book" and "TableOfContents" classes in terms of API/AJAX calls, so that an instantiation preference in the client JS (in this case, js/astonishers.js) can set the blog, API key, chapter-to-tag conversion, and more.
 - Pull out the UI-generation method from "Book" and put it into the client JS.  I am not sure whether it would be best to simply return the ToC array to the client or actually provide a for-each style method where the user can specify a function to be applied to each chapter and/or page in the ToC.
 - Completely disconnect the Pages, TableOfContents, and Book classes from JQuery Mobile.  These methods shouldn't need to use any JQM-specific features, and by removing them we can more easily port to another (hopefully more snappy) platform in the future.
+
 *Features*
 - Add support for static linking via address-bar variables.  This was implemented in the pre-JQM commits, but was removed because JQM takes over the address bar for its navigation.  I'm not sure whether there are conflicts now between JQM and this old code, but if not, it should be put back in and enabled so that the site is more "shareable"
 - Add social media sharing options.  Speaking of "shareable", a "Share On..." would be a great feature if added as a non-obtrusive button (maybe in the header?).

@@ -1,20 +1,28 @@
+/* Allows title to span a greater width of the header on small devices */
 .ui-title {
     margin: 0.6em 3% 0.8em !important;
 }
 
+/* Sizing property for the main content area */
 #mainContent {
 	text-align:center;
 }
+
+/* Sizing properties for the dynamically inserted content div (photo or video) */
 .contentPage {
 	width:100%;
 	height:100%;
 }
+
+/* Image sizing properties */
 .contentPage img {
 	width:100%;
 	max-width:500px;
 	margin:0px;
 	padding:0px;
 }
+
+/* Video sizing properties */
 .contentPage iframe {
 	width:100%;
 	max-width:800px;
@@ -22,6 +30,7 @@
 	margin:0px;
 	padding:0px;
 }
+
 /*  Makes the navigation popup take up a decent screen space
 ref: https://forum.jquery.com/topic/expanding-the-default-jquerymobile-popup-width-to-a-of-screen */
 #navPane-popup {
@@ -29,11 +38,15 @@ ref: https://forum.jquery.com/topic/expanding-the-default-jquerymobile-popup-wid
     left: 10%;
     right: 10%
 }
+
+/* Media query prevents large screens from expanding navPane beyond a reasonable size */
 @media all and (min-width: 350px) {
 	#navPane-popup {
 		width: 300px;
 	}
 }
+
+/* Sets the background to black */
 .ui-page {
 	background:#000000
 }

@@ -4,26 +4,32 @@
 		<meta charset="UTF-8">
 		<meta name="viewport" content="minimal-ui, width=device-width, initial-scale=1, maximum-scale=1"> 
 		<title>Astonishers: The Animated Webcomic</title>
+		
 		<link rel="stylesheet" href="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.css" />
-		<script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
-		<script src="js/jq_preload_settings.js"></script>
-		<script src="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.js"></script>
 		<link rel='stylesheet' href='css/astonishers.css' />
+		
+		<script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+		<!-- JQuery Mobile settings must be loaded before JQM itself -->
+		<script src="js/jq_preload_settings.js"></script>
+		<script src="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.js"></script>		
 	</head>
 
 	<body>
-		<!-- CONTENT -->
+		<!-- Primary (and only) page for JQuery Mobile -->
 		<div data-role="page" id="contentPane">
-			
+			<!-- HEADER BAR/ABOUT ICON -->
 			<header data-role="header"  data-position="fixed" >
 				<h1 id="pageLabel">Astonishers, the Animated Webcomic</h1>
 				<a href="#about" data-rel="popup" data-transition="pop" data-icon="info" class="ui-btn-right" data-iconpos="notext">About</a>
 			</header>
-		
+
 			<div data-role="content" role="main">
-				<div id="mainContent"></div>
+				<div id="mainContent">
+					<!-- This section dynamically filled/emptied in Javascript -->
+				</div>
 			</div>
-			<!-- ABOUT PAGE -->
+			
+			<!-- ABOUT POP-UP -->
 			<div data-role="popup" id="about">
 					<p align="center">Created by <a href="http://ctrayn.weebly.com">Chel Traynor</a><br>
 					Follow on <a href="http://astonishers.tumblr.com">Tumblr</a>/<a href="http://twitter.com/tweetstonishers">Twitter</a><br>
@@ -31,12 +37,15 @@
 					Site issues? <a href="mailto:i@keithajackson.com">Contact the developer</a>
 					</p>
 			</div>
-			<!-- NAVIGATION -->
+			
+			<!-- NAVIGATION POP-UP -->
 			<div data-role="popup" id="navPane">
 			
 				<div data-role="content" data-theme="a">
-					<label for="makecollapsible">Chapter Selection</label>
-					<form id="makecollapsible"></form>
+					<label for="dynamicTOC">Chapter Selection</label>
+					<form id="dynamicTOC">
+						<!-- This section filled in Javascript (Book.js/Book.loadNavTOC()) -->
+					</form>
 					<label for="quicklinks">Quick Links</label>
 					<div id="quicklinks" data-role="controlgroup" data-type="vertical">
 						<a id="firstPage" data-role="button">First Page</a>
@@ -45,6 +54,7 @@
 				</div>
 			</div>
 			
+			<!-- NAVIGATION FOOTER -->
 			<div data-role="footer" data-position="fixed">
 				<div data-role="navbar">
 					<ul>
@@ -55,9 +65,11 @@
 				</div>
 			</div>
 		</div>
+		
 		<script src="js/Page.js"></script>
 		<script src="js/TableOfContents.js"></script>
 		<script src="js/Book.js"></script>
+		<script src="js/cookieTools.js"></script>
 		<script src="js/astonishers.js"></script>
 	</body>
 </html>

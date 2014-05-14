@@ -1,24 +1,44 @@
-// Page
-// Accepts as constructor a JSON object from the Tumblr API
-// and a page label ("Chapter X, Page Y").
-// Provides methods to load, insert, and remove the page
+/**
+  * Page class
+  * PURPOSE: A "page" represents a single Tumblr post's worth of either
+  * 		 photo or video data.  Contains methods to format this data
+  *			 for display on the website and fetch the page title.
+  * INPUTS :
+  *			 postData: The Tumblr JSON object containing the post information.
+  *			 pageLabel: The "page title" that should be displayed in the header
+  *						when this page is loaded.
+  * PROPERTIES :
+  * 		 id: the Tumblr-designated post id this page is based on
+  * FUNCTIONS :
+  *			 getLabel() - returns the page title as a string (format: "Chapter X, Page Y")
+  *			 getElement() - returns the formatted DOM object for the page.
+  *
+  */
 function Page(postData, pageLabel) {
+	// PRIVATE VARIABLES
 	var self=this;
 	var label = pageLabel;
-	this.id = postData.id;
-	this.type = postData.type;
+	var type = postData.type;
 	var landscapeIndex = 0;
 	
+	// PUBLIC VARIABLES
+	this.id = postData.id;
+	
+	// PUBLIC METHODS	
+	// Returns the page title
 	this.getLabel = function() { return label; }
-	// Different if we have a video or photo postData
-	if(this.type == "photo") {
+	
+	// Different method definitions are given depending on the post type
+	if(type == "photo") {
+		// Load photo array with ONLY the urls from the Tumblr post
+		// data, nothing else
 		var photoURLs = new Array();
-		// Load photo array with ONLY urls, nothing else
 		for (var i = 0; i < postData.photos.length; i++) {
 			photoURLs[i] = postData.photos[i].original_size.url;
 		}
 		
-		this.getPortraitHTML = function () {
+		// Returns the DOM object for this page
+		this.getElement = function () {
 			// reset landscape (since we've switched orientations
 			var photosetContainer = document.createElement("div");
 			photosetContainer.setAttribute("class", "contentPage");
@@ -36,55 +56,12 @@ function Page(postData, pageLabel) {
 			return photosetContainer;
 		}
 
-		this.getLandscapeHTML = function() {
-			var thisPhoto = document.createElement("img");
-			thisPhoto.setAttribute("class", "contentPhoto");
-			thisPhoto.setAttribute("src", photoURLs[landscapeIndex]);
-				
-			return thisPhoto;
-		}
-		
-		// Returns false if we are already at the last page
-		this.getNextLandscapeHTML = function() {
-			if(landscapeIndex + 1 == photoURLs.length) {
-				return false;
-			} else {
-				landscapeIndex++;
-				return self.getLandscapeHTML();
-			}
-		}
-		// Returns false if we are already at the first page
-		this.getPreviousLandscapeHTML = function() {
-			if(landscapeIndex - 1 < 0) {
-				return false;
-			} else {
-				landscapeIndex--;
-				return self.getLandscapeHTML();
-			}
-		}
-		
-		this.hasNextLandscapeHTML = function () {
-			if(landscapeIndex + 1 == photoURLs.length) {
-				return false;
-			} else {
-				return true
-			}
-		}
-		
-		this.hasPreviousLandscapeHTML = function () {
-			if(landscapeIndex - 1 < 0) {
-				return false;
-			} else {
-				return true;
-			}
-		}
-		
-		
-		
-	} else if (this.type == "video") {
+	} else if (type == "video") {
+		// Only data we need from the Tumblr data is the embed HTML
 		var embedCode = postData.player[0].embed_code;
 		
-		this.getPortraitHTML = function () {
+		// Returns the DOM object for this page
+		this.getElement = function () {
 			var videoEmbed = document.createElement("div");
 			videoEmbed.setAttribute("class", "contentPage");
 			videoEmbed.setAttribute("id", self.id);
@@ -92,70 +69,17 @@ function Page(postData, pageLabel) {
 			return videoEmbed;
 		}
 		
-		this.getLandscapeHTML = function() {
-			var thisPhoto = document.createElement("img");
-			thisPhoto.setAttribute("class", "contentVideo");
-			thisPhoto.innerHTML = embedCode;
-				
-			return thisPhoto;
-		}
-		
-		//There's only ever one video, so this is false.
-		this.getNextLandscapeHTML = function() {
-			return false;
-		}
-		
-		//There's only ever one video, so this is false.
-		this.getPreviousLandscapeHTML = function() {
-			return false;
-		}
-		
-		this.hasNextLandscapeHTML = function () {
-			return false;
-		}
-		
-		this.hasPreviousLandscapeHTML = function () {
-			return false;
-		}
-		
-		
-		
 	} else {
-		console.log("Cannot determine the type of this post!");
+		console.log("PAGE: Cannot determine the type of this post!");
 		
-		this.getPortraitHTML = function () {
+		// If the type is invalid, function is still defined (just returns
+		//		an empty DOM object)
+		this.getElement = function () {
 			var emptyThing = document.createElement("div");
 			emptyThing.setAttribute("class", "contentPage");
 			emptyThing.setAttribute("id", self.id);
 			return emptyThing;
 		};
 		
-		this.getNextLandscapeHTML = function() {
-			return false;
-		}
-		
-		this.getPreviousLandscapeHTML = function() {
-			return false;
-		}
-		
-		this.hasNextLandscapeHTML = function () {
-			return false;
-		}
-		
-		this.hasPreviousLandscapeHTML = function () {
-			return false;
-		}
-		
-		this.getLandscapeHTML = function() {
-			var emptyThing = document.createElement("div");
-			emptyThing.setAttribute("class", "contentImage");
-			emptyThing.setAttribute("id", self.id);
-			// Maybe add an error image here?
-			return emptyThing;
-		}
-		
-	}
-	this.kill = function() {
-		document.body.removeChild(document.getElementById(self.id));
 	}
 }

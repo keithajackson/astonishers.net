@@ -6,11 +6,20 @@
 		<title>Astonishers: The Animated Webcomic</title>
 		
 		<link rel="stylesheet" href="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.css" />
+		
+		<!-- CSS to use for development -->
 		<link rel='stylesheet' href='css/astonishers.css' />
+		<!-- CSS to use for deployment -->
+		<!-- <link rel='stylesheet' href='css/astonishers.3.5.min.css' /> -->
 		
 		<script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+		
 		<!-- JQuery Mobile settings must be loaded before JQM itself -->
-		<script src="js/jq_preload_settings.min.js"></script>
+		<!-- Script to user for development -->
+		<script src="js/jq_preload_settings.js"></script>
+		<!-- Script to use for deployment -->
+		<!--<script src="js/jq_preload_settings.3.5.min.js"></script>-->
+		
 		<script src="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.js"></script>		
 	</head>
 
@@ -66,10 +75,13 @@
 			</div>
 		</div>
 		
-<!--	<script src="js/Page.js"></script>
+		<!-- Use this set of scripts for development -->
+		<script src="js/Page.js"></script>
 		<script src="js/TableOfContents.js"></script>
 		<script src="js/Book.js"></script>
-		<script src="js/cookieTools.js"></script> -->
-		<script src="js/astonishers.min.js"></script>
+		<script src="js/cookieTools.js"></script>
+		<script src="js/astonishers.js"></script>
+		<!-- Use this script for release (after minifying) -->
+		<!--<script src="js/astonishers.3.5.min.js"></script>-->
 	</body>
 </html>

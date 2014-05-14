@@ -1,46 +1,6 @@
 // API CALLS
 
-function loadTableOfContents(targetArray, startingChapter, callbackFunction) {
-	console.log("Attempting to get post count AJAX for a new chapter");
-	var theTag;
-	if(startingChapter == 0) {
-		theTag = "prologue";
-	} else {
-		theTag = "chapter " + startingChapter;
-	}
-	$.ajax({
-			url: "http://api.tumblr.com/v2/blog/astonishers.tumblr.com/posts?callback=?",
-			data : ({
-				api_key: 'BoJ3Xrg6F6oJA1T5TmK7bn387agH9oAwGV4FoMRBET2rSSYwYK',
-				tag: theTag,
-			}),
-
-			dataType: "jsonp",
-
-			success: function (data) {
-				console.log("Got response attempting to read " + theTag);
-				console.log(data);
-				
-				// If we have an empty response, we have finished the last chapter
-				if(data.response.total_posts <= 0) {
-					console.log("We are done loading the array.  Now running the callback function...");
-					if(callbackFunction != null) {
-						callbackFunction();
-					}
-				} else {
-					// Store this chapter's page count
-					targetArray.push(data.response.total_posts);
-					console.log("There are more chapters to count.  Calling again...");
-					// do a lookup for the next chapter
-					startingChapter = Number(startingChapter) + 1;
-					loadTableOfContents(targetArray, startingChapter, callbackFunction);
-				}
-				
-			}
-		})
-}
-
-function loadPageArrayFromAJAX(tumblrTag, targetArray, startingIndex, callbackFunction) {
+function loadChapterFromAjax(tumblrTag, targetArray, startingIndex, callbackFunction) {
 	console.log("Attempting to poll AJAX for a new chapter");
 	$.ajax({
 			url: "http://api.tumblr.com/v2/blog/astonishers.tumblr.com/posts?callback=?",
@@ -64,7 +24,7 @@ function loadPageArrayFromAJAX(tumblrTag, targetArray, startingIndex, callbackFu
 				console.log("The page array now has " + targetArray.length + " pages.");
 				if((data.response.total_posts - startingIndex) > 0) {
 					console.log("There are " + (data.response.total_posts - startingIndex) + " pages left to load of a total of " + data.response.total_posts + ". Calling again...");
-					loadPageArrayFromAJAX(tumblrTag, targetArray, startingIndex, callbackFunction);
+					loadChapterFromAjax(tumblrTag, targetArray, startingIndex, callbackFunction);
 				} else {
 					console.log("We are done loading the array.  Now running the callback function...");
 					if(callbackFunction != null) {
@@ -76,23 +36,6 @@ function loadPageArrayFromAJAX(tumblrTag, targetArray, startingIndex, callbackFu
 		})
 }
 
-function getMostRecentAJAX(callbackFunction) {
-	$.ajax({
-		url: "http://api.tumblr.com/v2/blog/astonishers.tumblr.com/posts?callback=?",
-		data : ({
-			api_key: 'BoJ3Xrg6F6oJA1T5TmK7bn387agH9oAwGV4FoMRBET2rSSYwYK',
-			tag: "astonishers update",
-			limit: 5,
-		}),
-
-		dataType: "jsonp",
-
-		success: function (data) {
-			callbackFunction(data.response.posts[0]);
-		}
-	})
-}
-
 // -------
 // CLASSES
 // -------
@@ -100,6 +43,9 @@ function getMostRecentAJAX(callbackFunction) {
 // Page
 // Accepts as constructor a JSON object from the Tumblr API
 // and provides methods to load, insert, and remove the page
+// loadImmediately: If true, will blindly try to get a page,
+// rather than waiting on the table of contents. Only use
+// when getting the onload page.
 function Page(postData) {
 	var self=this;
 	this.id = postData.id;
@@ -255,13 +201,15 @@ function Page(postData) {
 	}
 }
 
-function Chapter(chapterID, onLoadCallback) {
+function Chapter(chapterID, loadImmediately, callback) {
 	var self = this;
 	var pages = new Array();
 	var chaptTag;
 	var chaptID = Number(chapterID);
 	var currentPageIndex = 0;	// index of the currently displayed page
-
+	var onLoadCallback = callback;
+	console.log("The callback on init:")
+	console.log(onLoadCallback);
 	if(chapterID == 0) {
 		chaptTag = "prologue";
 	} else {
@@ -316,50 +264,136 @@ function Chapter(chapterID, onLoadCallback) {
 	this.getPageCount = function() {
 		return pages.length;
 	}
-	loadPageArrayFromAJAX(chaptTag, pages, 0, function() {
-		console.log("Created chapter.  Attempting to load callback.");
-		// Save the current chapter as a cookie
-		console.log(self);
-		onLoadCallback(self);
-	});
-}
-
-
-/*
-'Toast'-style notification
-https://gist.github.com/kamranzafar/3136584
-*/
-var toast=function(msg){
-	$("<div class='ui-loader ui-overlay-shadow ui-body-e ui-corner-all'><h3>"+msg+"</h3></div>")
-		.css({ display: "block",
-			opacity: 0.90,
-			position: "fixed",
-			padding: "7px",
-			"text-align": "center",
-			width: "270px",
-			left: ($(window).width() - 284)/2,
-			top: $(window).height()/2 })
-		.appendTo( $.mobile.pageContainer ).delay( 1500 )
-		.fadeOut( 400, function(){
-			$(this).remove();
+	// Ajax request to get this chapter
+	// Called internally if the TOC is initialized
+	// at the time that we are making the chapter
+	// Called externally if we have to wait on the TOC
+	this.getChapterFromAjax = function(hasTOC) {
+		// If we have the TOC, save an AJAX call and see if we are out of range
+		if(hasTOC) {
+			if(toc.length >= chaptID) {
+				// This chapter does not exist. Immediately return as empty
+				console.log("This is the callback:");
+				console.log(onLoadCallback);
+				onLoadCallback(self);
+			}
+		}
+		// If we don't have the TOC (or the page is in range), call AJAX to load.
+		loadChapterFromAjax(chaptTag, pages, 0, function() {
+			console.log("This is the callback:");
+			console.log(onLoadCallback);
+			onLoadCallback(self);
 		});
+	}
+
+	if(loadImmediately) {
+		// ignore TOC and fetch directly
+		console.log("The callback on loadImmediately:")
+		console.log(onLoadCallback);
+		self.getChapterFromAjax(false);
+	} else {
+		// wait on TOC
+		console.log("The callback waiting on TOC:")
+		console.log(onLoadCallback);
+		toc.runWhenLoaded(function () {return self.getChapterFromAjax(true)});
+	}
+	
 }
+		
+function TableOfContents() {
+	var self = this;
+	var pageCountList = new Array();
+	var isTOCLoaded = false;
+	var waitingOnTOC = new Array();
+	var isLoadingVisible = false;
+
+	this.runWhenLoaded = function (funcToCall) {
+		// If the TOC is already loaded, just do the call
+		if(isTOCLoaded) {
+			funcToCall();
+		} else {
+			console.log("Waiting for TOC...")
+			// If the TOC is loading,
+			// push this function into the waiting queue
+			waitingOnTOC.push(funcToCall);
+			// Show loading anim if it's not already on-screen
+			if(isLoadingVisible == false) {
+				isLoadingVisible = true;
+				$.mobile.loading("show", {
+					theme: "b",
+					text: "One moment...",
+					textVisible: true
+				  });
+			}
+		}
+	}
+	// First-run load
+	function tocLoadedCallback() {
+		$.mobile.loading("hide");
+		isLoadingVisible = false;
+		isTOCLoaded = true;
+		// If the user rushed for action(s), fulfill now
+		for(var i = 0; i < waitingOnTOC.length; i++) {
+			waitingOnTOC[i]();
+		}
+		waitingOnTOC.length = 0;
+	}
+	function loadTableOfContents(targetArray, startingChapter, callbackFunction) {
+		console.log("Attempting to get post count AJAX for a new chapter");
+		var theTag;
+		if(startingChapter == 0) {
+			theTag = "prologue";
+		} else {
+			theTag = "chapter " + startingChapter;
+		}
+		$.ajax({
+				url: "http://api.tumblr.com/v2/blog/astonishers.tumblr.com/posts?callback=?",
+				data : ({
+					api_key: 'BoJ3Xrg6F6oJA1T5TmK7bn387agH9oAwGV4FoMRBET2rSSYwYK',
+					tag: theTag,
+				}),
+
+				dataType: "jsonp",
+
+				success: function (data) {
+					console.log("Got response attempting to read " + theTag);
+					console.log(data);
+					
+					// If we have an empty response, we have finished the last chapter
+					if(data.response.total_posts <= 0) {
+						console.log("We are done loading the array.  Now running the callback function...");
+						if(callbackFunction != null) {
+							callbackFunction();
+						}
+					} else {
+						// Store this chapter's page count
+						targetArray.push(data.response.total_posts);
+						console.log("There are more chapters to count.  Calling again...");
+						// do a lookup for the next chapter
+						startingChapter = Number(startingChapter) + 1;
+						loadTableOfContents(targetArray, startingChapter, callbackFunction);
+					}
+					
+				}
+			});
+	}
+	loadTableOfContents(pageCountList, 0, loadTableOfContents);
+	tocLoadedCallback();
+}
+
+// ---------
+// CONSTANTS
+// ---------
+var LAST_PAGE_OF_THIS_CHAPTER = -1;
 
 // ------------------
 // INSTANCE VARIABLES
 // ------------------
-var isDesktop;
-var displayMode = "portrait";	// TODO: make this change dynamically
 var currentChapter;
 var latestChapter;
-var DEFAULT_LATEST_CHAPTER = 1;
-var LAST_PAGE_OF_THIS_CHAPTER = -1;
-var DISPLAY_MODE_PORTRAIT = "portrait";
-var DISPLAY_MODE_LANDSCAPE = "landscape";
-var toc = new Array();
+var toc;
 var isNavRendered = false;
-var isTOCLoaded = false;
-var isNavPopupWaiting = false;
+
 // cookie stuff for picking up location where user
 // left off
 // http://www.w3schools.com/js/js_cookies.asp
@@ -432,7 +466,11 @@ function displayChapter(chapterObj, pageIndex, errorMsg) {
 	console.log("Attempting to display page " + pageIndex +" of the chapter we just loaded.");
 	// If the chapter we tried to load is invalid (out of range), we will get an object with zero pages.
 	if(chapterObj.getPageCount() == 0) {
-		toast(errorMsg);
+		// Notify the user that the page could not be loaded
+		toc.runWhenLoaded(function () {
+			$.mobile.loading( 'show', {text: errorMsg, textonly: true });
+			setTimeout(function() { $.mobile.loading("hide"); }, 300);
+		});
 	} else {
 		currentChapter = chapterObj;
 		// check if this is supposed to load the last page of the chapter
@@ -455,68 +493,36 @@ function displayChapter(chapterObj, pageIndex, errorMsg) {
 // decide whether we're making a portrait or landscape-style
 // page.
 function displayPage(pageObj) {
-	if(displayMode == DISPLAY_MODE_PORTRAIT) {
-		$("#mainContent").empty();
-		$("#mainContent").html(pageObj.getPortraitHTML());
-		window.scrollTo(0, 0);
-		/*$(function() {
-			$("img.lazy").lazyload({
-				threshold : 600
-			});
-		});*/
-		// Change the header
-		// get page,chapter
-		var pageLabel;
-		if(currentChapter.getChapterNumber() == 0) {
-			pageLabel = "Prologue, "
-		} else {
-			pageLabel = "Chapter " + currentChapter.getChapterNumber() + ", ";
-		}
-		pageLabel = pageLabel + "Page " + (Number(currentChapter.getCurrentPageNumber()) + 1);
-		$("#pageLabel").html(pageLabel);
-	} else if (displayMode = DISPLAY_MODE_LANDSCAPE) {
-		// This is only called when we are loading the first frame of a page
-		 $("#mainContent").empty();
-		 $("#mainContent").html(pageObj.getLandscapeHTML());
+	$("#mainContent").empty();
+	$("#mainContent").html(pageObj.getPortraitHTML());
+	window.scrollTo(0, 0);
+	// Change the header
+	// get page,chapter
+	var pageLabel;
+	if(currentChapter.getChapterNumber() == 0) {
+		pageLabel = "Prologue, "
 	} else {
-		console.log("Could not resolve the display mode type for this page!");
+		pageLabel = "Chapter " + currentChapter.getChapterNumber() + ", ";
 	}
+	pageLabel = pageLabel + "Page " + (Number(currentChapter.getCurrentPageNumber()) + 1);
+	$("#pageLabel").html(pageLabel);
+
 	// save place in cookie
 	setCookie("chapter",currentChapter.getChapterNumber(),30);
 	setCookie("page",currentChapter.getCurrentPageNumber(),30);
 }
 
 function loadNextChapter() {
-	new Chapter(currentChapter.getChapterNumber() + 1, function(newChapterObj) {displayChapter(newChapterObj, 0, "This is the last page.")});
+	new Chapter(currentChapter.getChapterNumber() + 1, false, function(newChapterObj) {displayChapter(newChapterObj, 0, "This is the last page.")});
 }
 
 function loadPreviousChapter() {
-	new Chapter(currentChapter.getChapterNumber() - 1, function(newChapterObj) {displayChapter(newChapterObj, LAST_PAGE_OF_THIS_CHAPTER, "This is the first page.")});
+	new Chapter(currentChapter.getChapterNumber() - 1, false, function(newChapterObj) {displayChapter(newChapterObj, LAST_PAGE_OF_THIS_CHAPTER, "This is the first page.")});
 }
 
-function loadChapter(chapterIndex, pageIndex) {
+function loadChapter(chapterIndex, pageIndex, loadImmediately) {
 	console.log("Loading chapter " + pageIndex);
-	new Chapter(chapterIndex, function(newChapterObj) {displayChapter(newChapterObj, pageIndex, "Cannot load chapter " + chapterIndex + ", page " + pageIndex + ".")});
-}
-
-function loadNextImage() {
-	// replace with previous frame if there is one
-	if(currentChapter.getCurrentPage().hasNextLandscapeHTML() == true) {
-		$("#mainContent").empty();
-		$("#mainContent").html(currentChapter.getCurrentPage().getNextLandscapeHTML());
-	} else {
-		loadNextPage();
-	}
-}
-
-function loadPreviousImage() {
-	// replace with previous frame if there is one
-	if(currentChapter.getCurrentPage().hasPreviousLandscapeHTML() == true) {
-		$("#mainContent").empty();
-		$("#mainContent").html(currentChapter.getCurrentPage().getPreviousLandscapeHTML());
-	} else {
-		loadPreviousPage();
-	}
+	new Chapter(chapterIndex, loadImmediately, function(newChapterObj) {displayChapter(newChapterObj, pageIndex, "Cannot load chapter " + chapterIndex + ", page " + pageIndex + ".")});
 }
 
 $("#navPane").on("popupbeforeposition", function(event) {
@@ -565,122 +571,68 @@ $("#navPane").on("popupbeforeposition", function(event) {
 			var thePage = Number(this.getAttribute("pageix"));
 			console.log("Chapter: " + theChapter + ", page: " + thePage);
 			if(typeof(theChapter) == "number" && typeof(thePage) == "number") {
-				loadChapter(theChapter, thePage);
+				loadChapter(theChapter, thePage, false);
 				killSplash();
 			}
 		});
 		$("#firstPage").click(function (event) {
 			// jump to prologue;
-			loadChapter(0, 0);
+			loadChapter(0, 0, false);
 			killSplash();
 		});
 
 		$("#latestPage").click(function (event) {
-			loadChapter(latestChapter, LAST_PAGE_OF_THIS_CHAPTER);
+			loadChapter(toc.length - 1, toc[toc.length - 1] - 1, false);
 			killSplash();
 		});
 	}
 });
 
 $("#nextPage").click(function(event) {
-	if(displayMode == DISPLAY_MODE_LANDSCAPE)
-		loadNextImage();
-	else
-		loadNextPage();
+	toc.runWhenLoaded(loadNextPage);
 });
 
 $("#previousPage").click(function(event) {
-	if(displayMode == DISPLAY_MODE_LANDSCAPE)
-		loadPreviousImage();
-	else
-		loadPreviousPage();
+	toc.runWhenLoaded(loadPreviousPage);
 });
 
 $("#showNavBtn").click(function(event) {
-	if(isTOCLoaded == false) {
-		isNavPopupWaiting = true;
-		$.mobile.loading("show", {
-            theme: "b",
-            text: "One moment...",
-            textVisible: true
-          });
-	} else {
-		$("#navPane").popup("open", {positionTo: "window"});
-	}
+	toc.runWhenLoaded(function () {$("#navPane").popup("open", {positionTo: "window"})});
 });
 
 $(document).keydown(function(e){
     if (e.keyCode == 37) {	// left arrow 
-       	if(displayMode == DISPLAY_MODE_LANDSCAPE)
-			loadPreviousImage();
-		else
-			loadPreviousPage();
+		toc.runWhenLoaded(loadPreviousPage);
     }
 	else if (e.keyCode == 39){
-		if(displayMode == DISPLAY_MODE_LANDSCAPE)
-			loadNextImage();
-		else
-			loadNextPage();
+		toc.runWhenLoaded(loadNextPage);
 	}
 });
 
-$(function(){
-	$( "img" ).on( "swipeleft", function(event) {
-		if(displayMode == DISPLAY_MODE_LANDSCAPE)
-			loadNextImage();
-	});
-	$( "img" ).on( "swiperight", function(event) {
-		if(displayMode == DISPLAY_MODE_LANDSCAPE)
-			loadPreviousImage();
-	});
-});
 
-/* JQuery: Populate the table as soon as the page is loaded. */
+
+
+
 $('#contentPane').on('pageinit', function() {
-	isDesktop = ($(window).width() > 700);
+	toc = new TableOfContents();
+	// Immediately load page (without TOC)
+	var hasValidCookie;
+	var cookieChapter = getCookie("chapter");
+	var cookiePage = getCookie("page");
+	var suppressSplash = getCookie("suppressSplash");
 	
-	// Get latest chapter number and then display the splash/prompt
-	getMostRecentAJAX(function(mostRecentPost) {
-		var hasValidCookie;
-		var cookieChapter = getCookie("chapter");
-		var cookiePage = getCookie("page");
-		var suppressSplash = getCookie("suppressSplash");
-		if(cookieChapter != "" && !isNaN(cookieChapter) && cookiePage != "" && !isNaN(cookiePage) && (cookieChapter != 0 || cookiePage != 0)) {
-			console.log("Loading chapter " + cookieChapter + ", page " + cookiePage);
-			loadChapter(cookieChapter, cookiePage);
-			startChapter = cookieChapter;
-			startPage = cookiePage;
-			hasValidCookie = true;
-		} else { 
-			// Do NOT update the URL in myLocation, as we want to show the splash again
-			// if the user doesn't click on anything
-			loadChapter(0, 0);
-			console.log("No cookie.  We are starting at the beginning.");
-			hasValidCookie = false;
-		}
-		latestChapter = DEFAULT_LATEST_CHAPTER;
-		var latestPostDate = mostRecentPost.date.substr(0,10);
-		// Figure out latest chapter from the tags of the post
-		for(var i = 0; i < mostRecentPost.tags.length; i++) {
-			if(mostRecentPost.tags[i].substr(0, 8)== "chapter ") {
-				latestChapter = mostRecentPost.tags[i].substr(8);
-				console.log("Found latest chapter is " + latestChapter + " from tags of most recent post.");
-				break;
-			}
-		}
-		// load nav
-		
-		loadTableOfContents(toc, 0, function() {
-			isTOCLoaded = true;
-			// if mobile loading thing is going on, dismiss and show the popup
-			if(isNavPopupWaiting) {
-				// dismiss loading thing
-				$.mobile.loading("hide");
-				// show popup
-				$("#navPane").popup("open", {positionTo: "window"});
-			}
-		});
-	});	
+	// Check if the cookie chapter/page is valid
+	if(cookieChapter != "" && !isNaN(cookieChapter) && cookiePage != "" && !isNaN(cookiePage)) {
+		console.log("Loading chapter " + cookieChapter + ", page " + cookiePage);
+		loadChapter(cookieChapter, cookiePage, true);
+		startChapter = cookieChapter;
+		startPage = cookiePage;
+		hasValidCookie = true;
+	} else {
+		console.log("No cookie.  We are starting at the beginning.");
+		loadChapter(0, 0, true);
+		hasValidCookie = false;
+	}
 	
 });
 

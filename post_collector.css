@@ -2,6 +2,9 @@
     margin: 0.6em 3% 0.8em !important;
 }
 
+#mainContent {
+	text-align:center;
+}
 .contentPage {
 	width:100%;
 	height:100%;
@@ -19,10 +22,6 @@
 	margin:0px;
 	padding:0px;
 }
-
-#splashScreen .ui-header a {
-	display: none;
-}
 /*  Makes the navigation popup take up a decent screen space
 ref: https://forum.jquery.com/topic/expanding-the-default-jquerymobile-popup-width-to-a-of-screen */
 #navPane-popup {
@@ -32,23 +31,4 @@ ref: https://forum.jquery.com/topic/expanding-the-default-jquerymobile-popup-wid
 }
 .ui-page {
 	background:#000000
-}
-
-.ui-dialog-contain {
-	top: -50px;
-} 
-#splashTextDetail p {
-	padding:0;
-	margin:0;
-}
-
-#splashTextDetail h1 {
-	padding:0;
-	margin:0;
-}
-
-#splashTextDetail h2 {
-	font-size:.8em;
-	padding:0;
-	margin:0;
 }

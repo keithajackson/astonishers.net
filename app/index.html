@@ -2,25 +2,22 @@
 <html lang="en">
 	<head>
 		<meta charset="UTF-8">
-		<meta name="viewport" content="minimal-ui, width=device-width, initial-scale=1, maximum-scale=1"> 
+		<meta name="viewport" content="minimal-ui, width=device-width, initial-scale=1, maximum-scale=1">
 		<title>Astonishers: The Animated Webcomic</title>
-		
+
 		<link rel="stylesheet" href="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.css" />
-		
+
 		<!-- CSS to use for development -->
-		<link rel='stylesheet' href='css/astonishers.css' />
+		<link rel='stylesheet' href='styles/astonishers.css' />
 		<!-- CSS to use for deployment -->
 		<!-- <link rel='stylesheet' href='css/astonishers.3.5.min.css' /> -->
-		
+
 		<script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
-		
+
 		<!-- JQuery Mobile settings must be loaded before JQM itself -->
-		<!-- Script to user for development -->
-		<script src="js/jq_preload_settings.js"></script>
-		<!-- Script to use for deployment -->
-		<!--<script src="js/jq_preload_settings.3.5.min.js"></script>-->
-		
-		<script src="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.js"></script>		
+		<script src="common/jq_preload_settings.js"></script>
+
+		<script src="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.js"></script>
 	</head>
 
 	<body>
@@ -37,7 +34,7 @@
 					<!-- This section dynamically filled/emptied in Javascript -->
 				</div>
 			</div>
-			
+
 			<!-- ABOUT POP-UP -->
 			<div data-role="popup" id="about">
 					<p align="center">Created by <a href="http://ctrayn.weebly.com">Chel Traynor</a><br>
@@ -46,10 +43,10 @@
 					Site issues? <a href="mailto:i@keithajackson.com">Contact the developer</a>
 					</p>
 			</div>
-			
+
 			<!-- NAVIGATION POP-UP -->
 			<div data-role="popup" id="navPane">
-			
+
 				<div data-role="content" data-theme="a">
 					<label for="dynamicTOC">Chapter Selection</label>
 					<form id="dynamicTOC">
@@ -62,7 +59,7 @@
 					</div>
 				</div>
 			</div>
-			
+
 			<!-- NAVIGATION FOOTER -->
 			<div data-role="footer" data-position="fixed">
 				<div data-role="navbar">
@@ -74,14 +71,11 @@
 				</div>
 			</div>
 		</div>
-		
-		<!-- Use this set of scripts for development -->
-		<script src="js/Page.js"></script>
-		<script src="js/TableOfContents.js"></script>
-		<script src="js/Book.js"></script>
-		<script src="js/cookieTools.js"></script>
-		<script src="js/astonishers.js"></script>
-		<!-- Use this script for release (after minifying) -->
-		<!--<script src="js/astonishers.3.5.min.js"></script>-->
+
+		<script src="models/page.js"></script>
+		<script src="models/toc.js"></script>
+		<script src="models/book.js"></script>
+		<script src="common/cookieTools.js"></script>
+		<script src="main.js"></script>
 	</body>
 </html>

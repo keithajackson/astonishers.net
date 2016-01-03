@@ -1,4 +1,7 @@
 # Windows
 Thumbs.db
+# NPM/Node files
+*.log
+node_modules
 # Non-site files
 /proposal/

@@ -1,0 +1,21 @@
+{
+  "name": "astonishers.net",
+  "version": "2.0.0",
+  "description": "Online reader for the animated webcomic",
+  "scripts": {
+    "dev": "http-server app"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/keithajackson/astonishers.net.git"
+  },
+  "author": "Keith Aleq Jackson",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/keithajackson/astonishers.net/issues"
+  },
+  "homepage": "https://github.com/keithajackson/astonishers.net#readme",
+  "devDependencies": {
+    "http-server": "^0.8.5"
+  }
+}

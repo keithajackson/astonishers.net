@@ -4,7 +4,7 @@
   *			 chapters of the Tumblr webcomic.  All method calls to the Book object
   *			 for thisChapter.pages are asynchronous; the provided callback function is called
   *			 with a single parameter upon completion: the Page object requested or
-  *			 the boolean value "false" if there was an error. 
+  *			 the boolean value "false" if there was an error.
   * INPUTS :
   *			 startingChapter, startingPage: Chapter/page indices to quick-load
   *											before the Table of Contents has
@@ -21,27 +21,27 @@
   *			 getCurrentChapterIndex: Get the loaded chapter index
   *			 getCurrentPageIndex: Get the current page inded
   *			 loadNavTOC: Prepare the UI navigation menu using the dynamically-
-  *						 generated TOC, once it has finished constructing.  
+  *						 generated TOC, once it has finished constructing.
   * REQUIRES: Page.js, TableOfContents.js
   */
 function Book(startingChapter, startingPage, initPageHandler) {
 	// PRIVATE VARIABLES
 	var self = this;
-	
+
 	// Struct for current chapter information
 	var thisChapter = {
 		pages:new Array(),
 		index:-1,
 		currentIndex:-1
 	}
-	
+
 	var toc;	// Table of Contents for this Book
 	var isNavRendered = false;	// True if the popup navigation menu is ready to view
 	var isLoadingChapter = false;	// True if the thisChapter struct is being
 									// modified (and is thus invalid)
-	
+
 	// PRIVATE METHODS
-	
+
 	// Load a new chapter from the Tumblr API via AJAX, replacing the current thisChapter
 	// struct if successful. Runs recursively if the chapter is more than 20 pages long,
 	// due to the limits of the Tumblr API.
@@ -54,12 +54,12 @@ function Book(startingChapter, startingPage, initPageHandler) {
 	// OUTPUT: Will call postLoadHandlerCallback with no parameters once the
 	//		   chapter has finished loading.
 	function loadChapterFromAjax(chapterIx, firstPageIx, postLoadHandlerCallback) {
-		console.log("BOOK: Attempting to request chapter " + chapterIx + " (starting at page index " + firstPageIx + ") via AJAX.");
-		
+		if (console) console.log("BOOK: Attempting to request chapter " + chapterIx + " (starting at page index " + firstPageIx + ") via AJAX.");
+
 		// Make sure what we are assuming to be numbers are actually numbers
 		chapterIx = Number(chapterIx);
 		firstPageIx = Number(firstPageIx);
-		
+
 		// Generate the Tumblr tag to be used in the query
 		var tumblrTag
 		if(chapterIx == 0) {
@@ -67,7 +67,7 @@ function Book(startingChapter, startingPage, initPageHandler) {
 		} else {
 			tumblrTag = "chapter " + chapterIx;
 		}
-		
+
 		$.ajax({
 				url: "http://api.tumblr.com/v2/blog/astonishers.tumblr.com/posts?callback=?",
 				data : ({
@@ -79,7 +79,7 @@ function Book(startingChapter, startingPage, initPageHandler) {
 				dataType: "jsonp",
 
 				success: function (data) {
-					
+
 					// Generate chapter label
 					var chapterLabel;
 					if(chapterIx == 0) {
@@ -87,7 +87,7 @@ function Book(startingChapter, startingPage, initPageHandler) {
 					} else {
 						chapterLabel = "Chapter " + chapterIx;
 					}
-					
+
 					// Generate and push a page element into pages for every result found.
 					var arrIndex = thisChapter.pages.length;
 					for(var postIndex = data.response.posts.length - 1; postIndex >= 0; postIndex--) {
@@ -95,26 +95,26 @@ function Book(startingChapter, startingPage, initPageHandler) {
 						thisChapter.pages.push(new Page(data.response.posts[postIndex], pageLabel));
 						firstPageIx++;
 					}
-					
-					console.log("BOOK: Chapter " + thisChapter.index + " now has " + thisChapter.pages.length + " pages.");
-					
+
+					if (console) console.log("BOOK: Chapter " + thisChapter.index + " now has " + thisChapter.pages.length + " pages.");
+
 					// If there is a difference between the number of posts available (total_posts) and the number of posts we just
 					// added to the array (firstPageIx), we need to call this function recursively and get the next batch.
 					if((data.response.total_posts - firstPageIx) > 0) {
-						console.log("BOOK: There are " + (data.response.total_posts - firstPageIx) + " pages left to load of a total of " + data.response.total_posts + ". Getting the next batch...");
+						if (console) console.log("BOOK: There are " + (data.response.total_posts - firstPageIx) + " pages left to load of a total of " + data.response.total_posts + ". Getting the next batch...");
 						loadChapterFromAjax(chapterIx, firstPageIx, postLoadHandlerCallback);
 					} else {
 						// We've loaded all of the pages! Now to call our post-load handler...
-						console.log("BOOK: We are done loading the array.  Now running the callback function...");
+						if (console) console.log("BOOK: We are done loading the array.  Now running the callback function...");
 						if(postLoadHandlerCallback != null) {
 							postLoadHandlerCallback();
 						}
 					}
-					
+
 				}
 			})
 	}
-	
+
 	// Internal method to load the first page of the next chapter
 	// in the case that the user tries to navigate beyond the end of the
 	// current chapter.
@@ -150,7 +150,7 @@ function Book(startingChapter, startingPage, initPageHandler) {
 			});
 		}
 	}
-	
+
 	// Internal method to load the first page of the next chapter
 	// in the case that the user tries to navigate before the beginning of the
 	// current chapter.
@@ -166,7 +166,7 @@ function Book(startingChapter, startingPage, initPageHandler) {
 			toc.runWhenLoaded(function () {
 				thisChapter.index = Number(thisChapter.index)
 				// Check if the desired chapter exists
-				console.log("BOOK: Attempting to load previous chapter:" + (thisChapter.index - 1));
+				if (console) console.log("BOOK: Attempting to load previous chapter:" + (thisChapter.index - 1));
 				if(toc.hasChapter(thisChapter.index - 1)) {
 					chNum = thisChapter.index - 1;
 					pgNum = toc.getPageCount(thisChapter.index - 1) - 1
@@ -190,9 +190,9 @@ function Book(startingChapter, startingPage, initPageHandler) {
 			});
 		}
 	}
-	
+
 	// PUBLIC METHODS
-	
+
 	// Jumps to an arbitrary chapter and page, showing a loading spinner
 	// while doing so (just in case we have to make a long AJAX call).
 	// If the jump fails, calls pageHandlerCallback with parameter false.
@@ -215,7 +215,7 @@ function Book(startingChapter, startingPage, initPageHandler) {
 		// Ensure our numbers are actually read as numbers
 		chapterIx = Number(chapterIx);
 		pageIx = Number(pageIx);
-		
+
 		// Set up a loading spinner if it's not already being used
 		// Don't bother with the spinner if we're doing a quick-load
 		//		(ignoreTOC)
@@ -226,7 +226,7 @@ function Book(startingChapter, startingPage, initPageHandler) {
 					textVisible: true
 				  });
 		}
-				
+
 		// Gets chapter (via AJAX call if necessary) and
 		// passes requested page to pageHandlerCallback.
 		// Passes "false" if the call fails.
@@ -240,22 +240,22 @@ function Book(startingChapter, startingPage, initPageHandler) {
 				// If the page is out of range, abort and report failure.
 				if(thisChapter.index >= toc.getChapterCount()) {
 					// This chapter does not exist. Immediately return as false
-					console.log("BOOK: The chapter ID " + thisChapter.index + " is out of range of the toc " + toc.getChapterCount());
+					if (console) console.log("BOOK: The chapter ID " + thisChapter.index + " is out of range of the toc " + toc.getChapterCount());
 					// If the TOC isn't controlling the spinner, then we are and
 					// we need to dismiss it
 					if(toc.isShowingSpinner() == false) {
 						 $.mobile.loading("hide");
 					}
 					isLoadingChapter = false;
-					
+
 					// Run callback with "false" to indicate failure
 					pageHandlerCallback(false);
 					return;
 				}
 			}
-			
+
 			// If the page is in range (or we're ignoring the TOC), proceed with the load.
-			console.log("BOOK: Attempting to load chapter " + chapterIx + ", page " + pageIx);
+			if (console) console.log("BOOK: Attempting to load chapter " + chapterIx + ", page " + pageIx);
 			// Check if we currently have this chapter loaded.
 			// If so, we don't need to do a costly AJAX call
 			if(thisChapter.index == chapterIx) {
@@ -265,7 +265,7 @@ function Book(startingChapter, startingPage, initPageHandler) {
 							 $.mobile.loading("hide");
 				}
 				isLoadingChapter = false;
-				
+
 				// Pass on our callback to the getPage function with our
 				// desired page.
 				self.getPage(pageIx, pageHandlerCallback);
@@ -277,14 +277,14 @@ function Book(startingChapter, startingPage, initPageHandler) {
 				pageIx = Number(pageIx);
 				thisChapter.index = chapterIx;
 				thisChapter.currentIndex = pageIx;
-				
+
 				loadChapterFromAjax(thisChapter.index, 0, function() {
 					// If we turned on the spinner before, turn it off now.
 					if(ignoreTOC == false && toc.isShowingSpinner() == false) {
 							 $.mobile.loading("hide");
 					}
 					isLoadingChapter = false;
-					
+
 					// Run page handler with the desired page.
 					pageHandlerCallback(thisChapter.pages[Number(pageIx)]);
 					return;
@@ -303,7 +303,7 @@ function Book(startingChapter, startingPage, initPageHandler) {
 			toc.runWhenLoaded(function () {return getChapter(true)});
 		}
 	}
-	
+
 	// Gets an arbitrary page in the current chapter.
 	// Passes one parameter to the callback: false if
 	// the page call failed, or the requested Page object
@@ -315,14 +315,14 @@ function Book(startingChapter, startingPage, initPageHandler) {
 	this.getPage = function(index, pageHandlerCallback) {
 		index = Number(index)
 		if(index >= thisChapter.pages.length) {
-			console.log("BOOK: Page out of range of this chapter.");
+			if (console) console.log("BOOK: Page out of range of this chapter.");
 			pageHandlerCallback(false);
 		} else {
 			thisChapter.currentIndex = Number(index);
 			pageHandlerCallback(thisChapter.pages[index]);
 		}
 	}
-	
+
 	// Gets the currently visited page in the current chapter.
 	// This method is helpful if you need to re-load the page for
 	// some reason and don't want to hit the cookie to figure out
@@ -335,13 +335,13 @@ function Book(startingChapter, startingPage, initPageHandler) {
 	//			page being fetched (or false, if the fetch fails)
 	this.getCurrentPage = function(pageHandlerCallback) {
 		if(thisChapter.currentIndex >= thisChapter.pages.length || thisChapter.currentIndex < 0) {
-			console.log("BOOK: Page out of range of this chapter.  Returning false.");
+			if (console) console.log("BOOK: Page out of range of this chapter.  Returning false.");
 			pageHandlerCallback(false);
 		} else {
 			pageHandlerCallback(thisChapter.pages[thisChapter.currentIndex]);
 		}
 	}
-	
+
 	// Gets the page before the currently viewed page.  If this
 	// is the first page of the chapter, will automatically try
 	// to load the previous chapter and send back its last page.
@@ -356,7 +356,7 @@ function Book(startingChapter, startingPage, initPageHandler) {
 	this.getPreviousPage = function(pageHandlerCallback) {
 		toc.runWhenLoaded(function() {
 			if(thisChapter.currentIndex - 1 < 0) {
-				console.log("BOOK: Previous page out of range of this chapter.");
+				if (console) console.log("BOOK: Previous page out of range of this chapter.");
 				// Try to fetch previous chapter
 				loadPreviousChapter(pageHandlerCallback);
 			} else {
@@ -365,7 +365,7 @@ function Book(startingChapter, startingPage, initPageHandler) {
 			}
 		});
 	}
-	
+
 	// Gets the page after the currently viewed page.  If this
 	// is the last page of the chapter, will automatically try
 	// to load the next chapter and send back its first page.
@@ -380,7 +380,7 @@ function Book(startingChapter, startingPage, initPageHandler) {
 	this.getNextPage = function(pageHandlerCallback) {
 		toc.runWhenLoaded(function () {
 			if(thisChapter.currentIndex + 1 >= thisChapter.pages.length) {
-				console.log("BOOK: Next page out of range of this chapter.");
+				if (console) console.log("BOOK: Next page out of range of this chapter.");
 				loadNextChapter(pageHandlerCallback);
 			} else {
 				thisChapter.currentIndex++;
@@ -388,19 +388,19 @@ function Book(startingChapter, startingPage, initPageHandler) {
 			}
 		});
 	}
-	
+
 	// Returns the index of the currently-loaded chapter
 	// (used for saving cookies)
 	this.getCurrentChapterIndex = function() {
 		return thisChapter.index;
 	}
-	
+
 	// Returns the index of the currently-viewed page
 	// (used for saving cookies)
 	this.getCurrentPageIndex = function() {
 		return thisChapter.currentIndex;
 	}
-	
+
 	// Assembles the UI navigation based on the TOC.
 	// Converts DOM element with ID "dynamicTOC" into
 	// collapsible list with all chapters and pages in the
@@ -433,10 +433,10 @@ function Book(startingChapter, startingPage, initPageHandler) {
 				// Make collapsible ("drop-down") for each chapter
 				for (i = 0; i < toc.getChapterCount(); i++) {
 					var embHTML = ""; // We will build the list of buttons using this string
-					
+
 					// For each page in the given chapter
 					for(var page = 0; page < toc.getPageCount(i); page++) {
-						console.log("BOOK: Adding a page");
+						if (console) console.log("BOOK: Adding a page");
 						// Append a button
 						embHTML = embHTML + $('<div>').append(($('<a>')
 							.attr({
@@ -446,7 +446,7 @@ function Book(startingChapter, startingPage, initPageHandler) {
 							})
 								.html("Page " + (Number(page) + 1)))).html();
 					}
-					
+
 					// Build the chapter collapsible with embHTML for the
 					// inner HTML
 					var chapterString = "Chapter " + i;
@@ -463,41 +463,41 @@ function Book(startingChapter, startingPage, initPageHandler) {
 						.appendTo('#toc');
 				}
 				$('#dynamicTOC').collapsibleset().trigger('create');
-								
+
 				// Set button click behaviours
-				
+
 				// If user clicks on a page button, load that chapter/page
 				$('#dynamicTOC div a[data-role="button"]').bind('click', function (event) {
-					console.log("BOOK: Clicked a generated button!");
-					console.log(this);
+					if (console) console.log("BOOK: Clicked a generated button!");
+					if (console) console.log(this);
 					var theChapter = Number(this.getAttribute("chapterIx"));
 					var thePage = Number(this.getAttribute("pageix"));
-					console.log("BOOK: Chapter: " + theChapter + ", page: " + thePage);
+					if (console) console.log("BOOK: Chapter: " + theChapter + ", page: " + thePage);
 					if(typeof(theChapter) == "number" && typeof(thePage) == "number") {
 						self.jumpTo(theChapter, thePage, false, displayPage);
-						
+
 						// dismiss the dialog
 						$("#navPane").popup("close");
 					}
 					return;
 				});
-				
+
 				// If the user clicks the "first page" quicklink, jump to first page
 				$("#firstPage").click(function (event) {
 					// jump to chapter 0, page 0
 					self.jumpTo(0, 0, false, displayPage);
-					
+
 					// dismiss the dialog
 					$("#navPane").popup("close");
 					return;
 				});
-				
+
 				// If the user clicks the "last page" quicklink, jump to last page
 				$("#latestPage").click(function (event) {
 					var lastChapter = toc.getChapterCount() - 1;
 					var lastPage = toc.getPageCount(lastChapter) - 1
 					self.jumpTo(lastChapter, lastPage, false, displayPage);
-					
+
 					// dismiss the dialog
 					$("#navPane").popup("close");
 					return;
@@ -508,14 +508,14 @@ function Book(startingChapter, startingPage, initPageHandler) {
 					$('#collapse' + i).trigger('collapse').trigger('updatelayout');
 				}
 			}
-			
+
 			// Once the TOC is ready to view, run the callback
 			// method.
 			userTOCReadyCallback();
 			return;
 		});
 	}
-	
+
 	// CONSTRUCTION/INITIALIZATOIN
 	// Load the init chapter first, without the aid of the TOC
 	self.jumpTo(startingChapter, startingPage, true, initPageHandler);

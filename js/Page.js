@@ -20,14 +20,14 @@ function Page(postData, pageLabel) {
 	var label = pageLabel;
 	var type = postData.type;
 	var landscapeIndex = 0;
-	
+
 	// PUBLIC VARIABLES
 	this.id = postData.id;
-	
-	// PUBLIC METHODS	
+
+	// PUBLIC METHODS
 	// Returns the page title
 	this.getLabel = function() { return label; }
-	
+
 	// Different method definitions are given depending on the post type
 	if(type == "photo") {
 		// Load photo array with ONLY the urls from the Tumblr post
@@ -36,7 +36,7 @@ function Page(postData, pageLabel) {
 		for (var i = 0; i < postData.photos.length; i++) {
 			photoURLs[i] = postData.photos[i].original_size.url;
 		}
-		
+
 		// Returns the DOM object for this page
 		this.getElement = function () {
 			// reset landscape (since we've switched orientations
@@ -52,14 +52,14 @@ function Page(postData, pageLabel) {
 				photosetContainer.appendChild(thisPhoto);
 				photosetContainer.appendChild(br.cloneNode(false));
 			}
-			
+
 			return photosetContainer;
 		}
 
 	} else if (type == "video") {
 		// Only data we need from the Tumblr data is the embed HTML
 		var embedCode = postData.player[0].embed_code;
-		
+
 		// Returns the DOM object for this page
 		this.getElement = function () {
 			var videoEmbed = document.createElement("div");
@@ -68,10 +68,10 @@ function Page(postData, pageLabel) {
 			videoEmbed.innerHTML = embedCode;
 			return videoEmbed;
 		}
-		
+
 	} else {
-		console.log("PAGE: Cannot determine the type of this post!");
-		
+		if (console) console.log("PAGE: Cannot determine the type of this post!");
+
 		// If the type is invalid, function is still defined (just returns
 		//		an empty DOM object)
 		this.getElement = function () {
@@ -80,6 +80,6 @@ function Page(postData, pageLabel) {
 			emptyThing.setAttribute("id", self.id);
 			return emptyThing;
 		};
-		
+
 	}
 }

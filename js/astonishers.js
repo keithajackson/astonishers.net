@@ -15,19 +15,19 @@ var astonishers;	// will be initialized as a
 // Callback function used to display Page objects returned by
 // calls to the astonishers Book.  Ignores page fetch failures.
 function displayPage(pageObj) {
-	console.log(pageObj)
+	if (console) console.log(pageObj)
 	if(pageObj == false)
 		// This might be OK -- we will get this error when
 		// the user tries to go past the last page, which is
 		// already handled.
-		console.log("Failed to load page.")
+		if (console) console.log("Failed to load page.")
 	else {
 		// Replace the Page contents and scroll back
 		// to the top.
 		$("#mainContent").empty();
 		$("#mainContent").html(pageObj.getElement());
 		window.scrollTo(0, 0);
-		
+
 		// Set the header to the new page label.
 		$("#pageLabel").html(pageObj.getLabel());
 
@@ -50,7 +50,7 @@ $("#nextPage").click(function(event) {
 // Causes left and right arrow keys to navigate to the next and
 // previous pages, respectively
 $(document).keydown(function(e){
-    if (e.keyCode == 37) {	// left arrow 
+    if (e.keyCode == 37) {	// left arrow
 		astonishers.getPreviousPage(displayPage);
     }
 	else if (e.keyCode == 39){
@@ -71,26 +71,25 @@ $("#showNavBtn").click(function(event) {
 // After init, immediately loads a page while constructing the Book
 // in the background. If there is a user cookie with the last visited page,
 // the site will start there; if not, it will start at the very first
-// page of the comic. 
+// page of the comic.
 $('#contentPane').on('pageinit', function() {
 	// Get cookie information (will return empty strings
 	// if no cookies are present)
 	var cookieChapter = getCookie("chapter");
 	var cookiePage = getCookie("page");
 	var suppressSplash = getCookie("suppressSplash");
-	
+
 	// Check if the cookie chapter/page is valid
 	if(cookieChapter != "" && !isNaN(cookieChapter) && cookiePage != "" && !isNaN(cookiePage)) {
-		console.log("Loading chapter " + cookieChapter + ", page " + cookiePage);
-		
+		if (console) console.log("Loading chapter " + cookieChapter + ", page " + cookiePage);
+
 		// Create book and jump to the saved page
 		astonishers = new Book(cookieChapter, cookiePage, displayPage);
 	} else {
-		console.log("No cookie.  We are starting at the beginning.");
-		
+		if (console) console.log("No cookie.  We are starting at the beginning.");
+
 		// Create book and start at beginning.
 		astonishers = new Book(0, 0, displayPage);
 	}
-	
-});
 
+});

@@ -36,7 +36,7 @@ function TableOfContents() {
 		if(isTOCLoaded) {
 			funcToCall();
 		} else {
-			console.log("TOC: Waiting for TOC...")
+			if (console) console.log("TOC: Waiting for TOC...")
 			// If the TOC is loading,
 			// push this function into the waiting queue
 			waitingOnTOC.push(funcToCall);
@@ -51,7 +51,7 @@ function TableOfContents() {
 			}
 		}
 	}
-	
+
 	// Returns true if the TableOfContents is currently using
 	// the $.mobile.loading() spinner to tell the user to wait.
 	// If the TableOfContents is using the spinner, other methods
@@ -59,12 +59,12 @@ function TableOfContents() {
 	this.isShowingSpinner = function() {
 		return isLoadingVisible;
 	}
-	
+
 	// Returns the number of chapters found.
 	this.getChapterCount = function() {
 		return pageCountList.length;
 	}
-	
+
 	// Returns the number of pages for a chapter with a given
 	// index; returns false if chapter number is out of range.
 	this.getPageCount = function(chapterIx) {
@@ -74,20 +74,20 @@ function TableOfContents() {
 			return false;
 		}
 	}
-	
+
 	// Returns true if a chapter exists with the given index;
 	// returns false if out of range.
 	this.hasChapter = function(chapterIndex) {
 		return (Number(chapterIndex) < pageCountList.length && Number(chapterIndex) >= 0)
 	}
-	
+
 	// PRIVATE METHODS/CONSTRUCTOR
-	
+
 	// Callback to use once the AJAX calls/construction is done.
 	// Hides the loading spinner if it is visible, runs any processes
 	// queued by runWhenLoaded(), and marks the TOC as fully loaded.
 	function tocLoadedCallback() {
-		console.log("TOC: TOC is loaded!");
+		if (console) console.log("TOC: TOC is loaded!");
 		if(isLoadingVisible) {
 			$.mobile.loading("hide");
 			isLoadingVisible = false;
@@ -99,7 +99,7 @@ function TableOfContents() {
 		}
 		waitingOnTOC.length = 0;
 	}
-	
+
 	// Recursive AJAX method that counts the number of pages in successive
 	// chapters, starting at the given chapter index.  Used to construct
 	// the table of contents.
@@ -112,8 +112,8 @@ function TableOfContents() {
 	//			is run.
 	function loadPageCount(startingChapter) {
 		startingChapter = Number(startingChapter);
-		console.log("TOC: Attempting to get post count AJAX for chapter " + startingChapter);
-		
+		if (console) console.log("TOC: Attempting to get post count AJAX for chapter " + startingChapter);
+
 		// Generate Tumblr tag to use in AJAX call
 		var theTag;
 		if(startingChapter == 0) {
@@ -122,7 +122,7 @@ function TableOfContents() {
 		} else {
 			theTag = "chapter " + startingChapter;
 		}
-		
+
 		$.ajax({
 				url: "http://api.tumblr.com/v2/blog/astonishers.tumblr.com/posts?callback=?",
 				data : ({
@@ -133,11 +133,11 @@ function TableOfContents() {
 				dataType: "jsonp",
 
 				success: function (data) {
-					console.log("TOC: Got " + data.response.total_posts + " pages in " + theTag);
-					
+					if (console) console.log("TOC: Got " + data.response.total_posts + " pages in " + theTag);
+
 					// If we have an empty response, we have finished the last chapter
 					if(data.response.total_posts <= 0) {
-						console.log("TOC: We are done loading the TOC.  Now running the callback function...");
+						if (console) console.log("TOC: We are done loading the TOC.  Now running the callback function...");
 						tocLoadedCallback();
 					} else {
 						// Store this chapter's page count
@@ -146,11 +146,11 @@ function TableOfContents() {
 						startingChapter = Number(startingChapter) + 1;
 						loadPageCount(startingChapter);
 					}
-					
+
 				}
 			});
 	}
-	
+
 	// Load the table of contents by starting the recursive
 	// page count function at index 0
 	loadPageCount(pageCountList, 0, tocLoadedCallback);
